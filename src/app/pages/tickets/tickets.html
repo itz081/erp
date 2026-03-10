@@ -1,0 +1,47 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<p-toolbar class="mb-4">
+    <div class="p-toolbar-group-start">
+        <h2>Listado de Tickets</h2>
+    </div>
+    <div class="p-toolbar-group-end gap-2">
+        <p-button label="Crear Nuevo Ticket" icon="pi pi-plus" severity="success" (onClick)="createTicket()"></p-button>
+    </div>
+</p-toolbar>
+
+<p-card>
+    <p-table [value]="allTickets()" [paginator]="true" [rows]="10" responsiveLayout="scroll"
+        [globalFilterFields]="['titulo', 'estado', 'prioridad']">
+        <ng-template pTemplate="header">
+            <tr>
+                <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
+                <th pSortableColumn="titulo">Título <p-sortIcon field="titulo"></p-sortIcon></th>
+                <th pSortableColumn="estado">Estado <p-sortIcon field="estado"></p-sortIcon></th>
+                <th pSortableColumn="prioridad">Prioridad <p-sortIcon field="prioridad"></p-sortIcon></th>
+                <th pSortableColumn="fechaLimite">Fecha Límite <p-sortIcon field="fechaLimite"></p-sortIcon></th>
+                <th>Acciones</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-ticket>
+            <tr>
+                <td>{{ticket.id}}</td>
+                <td>{{ticket.titulo}}</td>
+                <td>{{ticket.estado}}</td>
+                <td>{{ticket.prioridad}}</td>
+                <td>{{ticket.fechaLimite | date}}</td>
+                <td>
+                    <p-button icon="pi pi-eye" [text]="true" [rounded]="true" severity="info"
+                        (onClick)="viewTicket(ticket.id)"></p-button>
+                    <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger"
+                        (onClick)="deleteTicket(ticket.id)"></p-button>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="6">No hay tickets registrados.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</p-card>

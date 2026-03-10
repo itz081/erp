@@ -1,0 +1,8 @@
+import { Ticket } from './ticket.model';
+
+export interface Group {
+    id: number;
+    nombre: string;
+    miembros: { username: string; email: string; avatar?: string }[];
+    tickets: Ticket[];
+}

@@ -1,0 +1,70 @@
+<p-toast></p-toast>
+<div class="flex justify-content-center align-items-center mt-5">
+    <p-card header="Crear Nuevo Ticket" [style]="{width: '50vw'}">
+        <form [formGroup]="ticketForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-4">
+
+            <div class="flex flex-column gap-2">
+                <label for="titulo">Título *</label>
+                <input pInputText id="titulo" formControlName="titulo" />
+                <small class="p-error" *ngIf="ticketForm.get('titulo')?.invalid && ticketForm.get('titulo')?.touched">
+                    El título es requerido (mínimo 5 caracteres).
+                </small>
+            </div>
+
+            <div class="flex flex-column gap-2">
+                <label for="descripcion">Descripción *</label>
+                <textarea pTextarea id="descripcion" formControlName="descripcion" rows="4"></textarea>
+                <small class="p-error"
+                    *ngIf="ticketForm.get('descripcion')?.invalid && ticketForm.get('descripcion')?.touched">
+                    La descripción es requerida (mínimo 10 caracteres).
+                </small>
+            </div>
+
+            <div class="grid">
+                <div class="col-12 md:col-6 flex flex-column gap-2">
+                    <label for="groupId">Grupo *</label>
+                    <p-select id="groupId" [options]="groups()" formControlName="groupId" optionLabel="nombre"
+                        optionValue="id" placeholder="Selecciona un grupo"></p-select>
+                    <small class="p-error"
+                        *ngIf="ticketForm.get('groupId')?.invalid && ticketForm.get('groupId')?.touched">Es
+                        requerido.</small>
+                </div>
+                <div class="col-12 md:col-6 flex flex-column gap-2">
+                    <label for="asignadoA">Asignar a *</label>
+                    <p-select id="asignadoA" [options]="selectedGroupMembers" formControlName="asignadoA"
+                        optionLabel="username" placeholder="Selecciona usuario"></p-select>
+                    <small class="p-error"
+                        *ngIf="ticketForm.get('asignadoA')?.invalid && ticketForm.get('asignadoA')?.touched">Es
+                        requerido.</small>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="col-12 md:col-6 flex flex-column gap-2">
+                    <label for="estado">Estado *</label>
+                    <p-select id="estado" [options]="estados" formControlName="estado"></p-select>
+                </div>
+                <div class="col-12 md:col-6 flex flex-column gap-2">
+                    <label for="prioridad">Prioridad *</label>
+                    <p-select id="prioridad" [options]="prioridades" formControlName="prioridad"></p-select>
+                </div>
+            </div>
+
+            <div class="flex flex-column gap-2">
+                <label for="fechaLimite">Fecha Límite *</label>
+                <p-datepicker id="fechaLimite" formControlName="fechaLimite" dateFormat="yy-mm-dd" [showIcon]="true"
+                    appendTo="body"></p-datepicker>
+                <small class="p-error"
+                    *ngIf="ticketForm.get('fechaLimite')?.invalid && ticketForm.get('fechaLimite')?.touched">Es
+                    requerida.</small>
+            </div>
+
+            <div class="flex justify-content-end gap-2 mt-3">
+                <p-button label="Cancelar" icon="pi pi-times" severity="secondary" [outlined]="true"
+                    (onClick)="cancel()"></p-button>
+                <p-button label="Crear Ticket" icon="pi pi-check" type="submit"
+                    [disabled]="ticketForm.invalid"></p-button>
+            </div>
+        </form>
+    </p-card>
+</div>

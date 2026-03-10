@@ -26,6 +26,36 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('./pages/user/user').then((m) => m.UserComponent),
             },
+            {
+                path: 'dashboard',
+                loadComponent: () =>
+                    import('./pages/dashboard/dashboard').then((m) => m.DashboardComponent),
+            },
+            {
+                path: 'groups/manage/:id',
+                loadComponent: () =>
+                    import('./pages/group-manage/group-manage').then((m) => m.GroupManageComponent),
+            },
+            {
+                path: 'groups/:id',
+                loadComponent: () =>
+                    import('./pages/group-view/group-view').then((m) => m.GroupViewComponent),
+            },
+            {
+                path: 'tickets',
+                loadComponent: () =>
+                    import('./pages/tickets/tickets').then((m) => m.TicketsComponent),
+            },
+            {
+                path: 'tickets/create',
+                loadComponent: () =>
+                    import('./pages/ticket-create/ticket-create').then((m) => m.TicketCreateComponent),
+            },
+            {
+                path: 'tickets/:id',
+                loadComponent: () =>
+                    import('./pages/ticket-detail/ticket-detail').then((m) => m.TicketDetailComponent),
+            }
         ],
     },
     {

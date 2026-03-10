@@ -1,0 +1,57 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<p-toolbar *ngIf="group()">
+    <div class="p-toolbar-group-start">
+        <p-button icon="pi pi-arrow-left" [text]="true" [rounded]="true" (onClick)="goBack()"></p-button>
+        <h2 class="ml-2">Gestionar Miembros: {{ group()?.nombre }}</h2>
+    </div>
+</p-toolbar>
+
+<div class="grid mt-4" *ngIf="group()">
+    <div class="col-12 md:col-8">
+        <p-card header="Miembros Actuales">
+            <p-table [value]="group()!.miembros" responsiveLayout="scroll">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Acciones</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-member>
+                    <tr>
+                        <td>{{member.username}}</td>
+                        <td>{{member.email}}</td>
+                        <td>
+                            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                (onClick)="confirmRemoveUser(member.username)"></p-button>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="3">No hay miembros en este grupo.</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </p-card>
+    </div>
+
+    <div class="col-12 md:col-4">
+        <p-card header="Añadir Miembro">
+            <div class="flex flex-column gap-3">
+                <div class="flex flex-column gap-2">
+                    <label for="username">Username</label>
+                    <input pInputText id="username" [(ngModel)]="newUsername" placeholder="Ingresa username" />
+                </div>
+                <div class="flex flex-column gap-2">
+                    <label for="email">Email</label>
+                    <input pInputText id="email" [(ngModel)]="newUserEmail" placeholder="Ingresa email" />
+                </div>
+                <p-button label="Añadir al Grupo" icon="pi pi-user-plus" (onClick)="addUser()"
+                    [disabled]="!newUsername || !newUserEmail"></p-button>
+            </div>
+        </p-card>
+    </div>
+</div>

@@ -8,6 +8,7 @@ export interface UserProfile {
     address: string;
     birthDate: string;
     password: string;
+    groupIds?: number[];
 }
 
 const STORAGE_KEY = 'registered_user';

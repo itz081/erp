@@ -1,0 +1,51 @@
+<p-toolbar>
+    <div class="p-toolbar-group-start">
+        <h2>Dashboard</h2>
+    </div>
+    <div class="p-toolbar-group-end">
+        <p-button label="Crear Ticket" icon="pi pi-plus" (onClick)="createTicket()"></p-button>
+    </div>
+</p-toolbar>
+
+<div class="grid mt-3">
+    <div class="col-12 md:col-6">
+        <p-card header="Seleccionar Grupo">
+            <p-select [options]="groups()" [(ngModel)]="selectedGroup" optionLabel="nombre"
+                placeholder="Selecciona un grupo para ver detalles" (onChange)="onGroupSelect($event)"
+                class="w-full"></p-select>
+        </p-card>
+    </div>
+    <div class="col-12 md:col-6">
+        <p-card header="Estadísticas de Tickets">
+            <p-chart type="pie" [data]="chartData" [options]="chartOptions" height="250px"></p-chart>
+        </p-card>
+    </div>
+</div>
+
+<div class="mt-4">
+    <p-card header="Resumen de Tickets Recientes">
+        <p-table [value]="allTickets()" [paginator]="true" [rows]="5" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Título</th>
+                    <th>Estado</th>
+                    <th>Prioridad</th>
+                    <th>Fecha Límite</th>
+                    <th>Acciones</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-ticket>
+                <tr>
+                    <td>{{ticket.titulo}}</td>
+                    <td>{{ticket.estado}}</td>
+                    <td>{{ticket.prioridad}}</td>
+                    <td>{{ticket.fechaLimite | date}}</td>
+                    <td>
+                        <p-button icon="pi pi-eye" [rounded]="true" [text]="true"
+                            (onClick)="viewTicket(ticket.id)"></p-button>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-card>
+</div>
