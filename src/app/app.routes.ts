@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './guards/auth.guard';
+import { roleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
     {
@@ -8,6 +10,7 @@ export const routes: Routes = [
     },
     {
         path: 'home',
+        canActivate: [authGuard],
         loadComponent: () =>
             import('./layouts/main-layout/main-layout').then((m) => m.MainLayoutComponent),
         children: [
@@ -48,6 +51,7 @@ export const routes: Routes = [
             },
             {
                 path: 'tickets/create',
+                canActivate: [roleGuard],
                 loadComponent: () =>
                     import('./pages/ticket-create/ticket-create').then((m) => m.TicketCreateComponent),
             },
@@ -55,6 +59,12 @@ export const routes: Routes = [
                 path: 'tickets/:id',
                 loadComponent: () =>
                     import('./pages/ticket-detail/ticket-detail').then((m) => m.TicketDetailComponent),
+            },
+            {
+                path: 'users-management',
+                canActivate: [roleGuard],
+                loadComponent: () =>
+                    import('./pages/user-management/user-management').then((m) => m.UserManagementComponent),
             }
         ],
     },

@@ -8,7 +8,7 @@
 <p-card styleClass="group-card">
     <p-toolbar styleClass="mb-4 gap-2">
         <ng-template pTemplate="left">
-            <p-button severity="success" label="Nuevo Grupo" icon="pi pi-plus" (onClick)="openNew()" />
+            <p-button severity="success" label="Nuevo Grupo" icon="pi pi-plus" (onClick)="openNew()" *ngIf="canAdd()" />
         </ng-template>
         <ng-template pTemplate="right">
             <p-tag [value]="'Total de Grupos: ' + N_get()" severity="info" />
@@ -41,9 +41,9 @@
                 <td>{{group.tickets}}</td>
                 <td>
                     <p-button icon="pi pi-pencil" class="mr-2" rounded="true" text="true" severity="info"
-                        (onClick)="editGroup(group)" />
+                        (onClick)="editGroup(group)" *ngIf="canEdit()" />
                     <p-button icon="pi pi-trash" severity="danger" rounded="true" text="true"
-                        (onClick)="deleteGroup(group)" />
+                        (onClick)="deleteGroup(group)" *ngIf="canDelete()" />
                 </td>
             </tr>
         </ng-template>

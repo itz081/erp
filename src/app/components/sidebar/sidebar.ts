@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, effect, inject } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { PanelMenuModule } from 'primeng/panelmenu';
 import { DividerModule } from 'primeng/divider';
@@ -17,11 +17,20 @@ import { UserService } from '../../services/user.service';
 export class SidebarComponent implements OnInit {
   appVersion = '1.0.0';
   items: MenuItem[] = [];
+  userService = inject(UserService);
+  router = inject(Router);
 
-  constructor(private router: Router, private userService: UserService) { }
+  constructor() {
+    effect(() => {
+        const user = this.userService.getCurrentUser()();
+        this.buildMenu(user?.role);
+    });
+  }
 
-  ngOnInit() {
-    this.items = [
+  ngOnInit() { }
+
+  private buildMenu(role?: string) {
+    const baseItems: MenuItem[] = [
       {
         label: 'Dashboard',
         icon: 'pi pi-home',
@@ -38,13 +47,22 @@ export class SidebarComponent implements OnInit {
         routerLink: ['/home/tickets'],
       },
       {
-        label: 'User',
+        label: 'Perfil',
         icon: 'pi pi-user',
         routerLink: ['/home/user'],
-      },
-      {
-        separator: true
-      },
+      }
+    ];
+
+    if (role === 'admin') {
+        baseItems.push({
+            label: 'Gestión Usuarios',
+            icon: 'pi pi-cog',
+            routerLink: ['/home/users-management'],
+        });
+    }
+
+    baseItems.push(
+      { separator: true },
       {
         label: 'Cerrar sesión',
         icon: 'pi pi-sign-out',
@@ -53,6 +71,8 @@ export class SidebarComponent implements OnInit {
           this.router.navigate(['/']);
         }
       }
-    ];
+    );
+
+    this.items = baseItems;
   }
 }

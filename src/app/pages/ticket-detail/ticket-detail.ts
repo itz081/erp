@@ -17,6 +17,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { TicketService } from '../../services/ticket.service';
 import { GroupService } from '../../services/group.service';
+import { UserService } from '../../services/user.service';
 
 @Component({
     selector: 'app-ticket-detail',
@@ -34,9 +35,23 @@ export class TicketDetailComponent implements OnInit {
     router = inject(Router);
     messageService = inject(MessageService);
     confirmationService = inject(ConfirmationService);
+    userService = inject(UserService);
 
     ticketId = signal<number>(0);
     ticket = computed(() => this.ticketService.getTicket(this.ticketId()));
+    canEdit = computed(() => {
+        const user = this.userService.getCurrentUser()();
+        return user?.role === 'admin' || (user?.permissions?.canEdit ?? false);
+    });
+    canDelete = computed(() => {
+        const user = this.userService.getCurrentUser()();
+        return user?.role === 'admin' || (user?.permissions?.canDelete ?? false);
+    });
+    canComment = computed(() => {
+        const user = this.userService.getCurrentUser()();
+        return user?.role === 'admin' || (user?.permissions?.canComment ?? false);
+    });
+    isAdmin = computed(() => this.userService.getCurrentUser()()?.role === 'admin');
 
     editMode = false;
     ticketForm!: FormGroup;
@@ -104,8 +119,13 @@ export class TicketDetailComponent implements OnInit {
     }
 
     addComment() {
-        if (this.newCommentText.trim()) {
-            this.ticketService.addComment(this.ticketId(), 'admin', this.newCommentText); // Usar el admin default por ahora
+        if (!this.canComment()) {
+            this.messageService.add({ severity: 'error', summary: 'Acceso Denegado', detail: 'No tienes permiso para comentar.' });
+            return;
+        }
+        const user = this.userService.getProfile();
+        if (this.newCommentText.trim() && user) {
+            this.ticketService.addComment(this.ticketId(), user.fullName, this.newCommentText);
             this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Comentario añadido' });
             this.newCommentText = '';
         }

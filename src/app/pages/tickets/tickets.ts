@@ -10,6 +10,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { TicketService } from '../../services/ticket.service';
+import { UserService } from '../../services/user.service';
 
 @Component({
     selector: 'app-tickets',
@@ -24,8 +25,18 @@ export class TicketsComponent {
     router = inject(Router);
     confirmationService = inject(ConfirmationService);
     messageService = inject(MessageService);
+    userService = inject(UserService);
 
     allTickets = computed(() => this.ticketService.tickets());
+    canAdd = computed(() => {
+        const user = this.userService.getCurrentUser()();
+        return user?.role === 'admin' || (user?.permissions?.canAdd ?? false);
+    });
+    canDelete = computed(() => {
+        const user = this.userService.getCurrentUser()();
+        return user?.role === 'admin' || (user?.permissions?.canDelete ?? false);
+    });
+    isAdmin = computed(() => this.userService.getCurrentUser()()?.role === 'admin');
 
     createTicket() {
         this.router.navigate(['/home/tickets/create']);

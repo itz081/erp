@@ -60,22 +60,14 @@ export class LoginPage {
         this.loading.set(true);
 
         setTimeout(() => {
-            const isAdmin =
-                email === this.adminEmail && password === this.adminPassword;
+            const user = this.userService.validateCredentials(email, password);
 
-            // Verificar también contra el usuario registrado
-            const registeredUser = this.userService.getProfile();
-            const isRegisteredUser =
-                registeredUser !== null &&
-                email === registeredUser.email &&
-                password === registeredUser.password;
-
-            if (isAdmin || isRegisteredUser) {
-                const name = isAdmin ? 'Administrador' : registeredUser!.fullName;
+            if (user) {
+                this.userService.setCurrentUser(user);
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Bienvenido',
-                    detail: `Hola, ${name}!`,
+                    detail: `Hola, ${user.fullName}!`,
                 });
                 setTimeout(() => {
                     this.loading.set(false);

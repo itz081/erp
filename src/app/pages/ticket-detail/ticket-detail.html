@@ -7,8 +7,8 @@
         <h2 class="ml-2">Ticket #{{ ticket()?.id }}: {{ ticket()?.titulo }}</h2>
     </div>
     <div class="p-toolbar-group-end gap-2">
-        <p-button *ngIf="!editMode" label="Editar" icon="pi pi-pencil" (onClick)="toggleEdit()"></p-button>
-        <p-button *ngIf="!editMode" label="Eliminar" icon="pi pi-trash" severity="danger"
+        <p-button *ngIf="!editMode && canEdit()" label="Editar" icon="pi pi-pencil" (onClick)="toggleEdit()"></p-button>
+        <p-button *ngIf="!editMode && canDelete()" label="Eliminar" icon="pi pi-trash" severity="danger"
             (onClick)="deleteTicket()"></p-button>
         <p-button *ngIf="editMode" label="Cancelar" icon="pi pi-times" severity="secondary"
             (onClick)="toggleEdit()"></p-button>
@@ -58,11 +58,14 @@
 
         <p-fieldset legend="Comentarios" class="mt-4 block">
             <div class="flex flex-column gap-3">
-                <div class="flex gap-2">
+                <div class="flex gap-2" *ngIf="canComment()">
                     <textarea pTextarea [(ngModel)]="newCommentText" rows="2" class="flex-grow-1"
                         placeholder="Escribe un comentario..."></textarea>
                     <p-button label="Comentar" icon="pi pi-send" (onClick)="addComment()"
                         [disabled]="!newCommentText.trim()"></p-button>
+                </div>
+                <div *ngIf="!canComment()" class="text-500 italic mb-2">
+                    No tienes permisos para agregar comentarios.
                 </div>
                 <p-timeline [value]="ticket()!.comentarios" class="mt-3 w-full">
                     <ng-template pTemplate="content" let-comentario>

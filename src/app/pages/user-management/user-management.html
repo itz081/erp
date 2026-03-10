@@ -1,0 +1,50 @@
+<p-toast></p-toast>
+
+<div class="p-4">
+    <p-card header="Gestión de Usuarios">
+        <p-table [value]="users()" [paginator]="true" [rows]="10" responsiveLayout="scroll" [tableStyle]="{'min-width': '70rem'}">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Tipo de Permiso</th>
+                    <th class="text-center">Agregar</th>
+                    <th class="text-center">Editar</th>
+                    <th class="text-center">Eliminar</th>
+                    <th class="text-center">Comentar</th>
+                    <th>Cambiar Permiso</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-user>
+                <tr>
+                    <td>{{user.fullName}}</td>
+                    <td>{{user.email}}</td>
+                    <td>
+                        <p-tag [value]="user.role === 'admin' ? 'Administrador' : 'Lector'" 
+                               [severity]="getRoleSeverity(user.role)">
+                        </p-tag>
+                    </td>
+                    <td class="text-center">
+                        <p-checkbox [(ngModel)]="user.permissions!.canAdd" [binary]="true" (onChange)="onPermissionChange(user)"></p-checkbox>
+                    </td>
+                    <td class="text-center">
+                        <p-checkbox [(ngModel)]="user.permissions!.canEdit" [binary]="true" (onChange)="onPermissionChange(user)"></p-checkbox>
+                    </td>
+                    <td class="text-center">
+                        <p-checkbox [(ngModel)]="user.permissions!.canDelete" [binary]="true" (onChange)="onPermissionChange(user)"></p-checkbox>
+                    </td>
+                    <td class="text-center">
+                        <p-checkbox [(ngModel)]="user.permissions!.canComment" [binary]="true" (onChange)="onPermissionChange(user)"></p-checkbox>
+                    </td>
+                    <td>
+                        <p-select [options]="roles" 
+                                  [(ngModel)]="user.role" 
+                                  (onChange)="onRoleChange(user, $event)"
+                                  appendTo="body">
+                        </p-select>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-card>
+</div>

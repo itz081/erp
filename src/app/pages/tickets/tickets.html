@@ -5,7 +5,7 @@
     <div class="p-toolbar-group-start">
         <h2>Listado de Tickets</h2>
     </div>
-    <div class="p-toolbar-group-end gap-2">
+    <div class="p-toolbar-group-end gap-2" *ngIf="canAdd()">
         <p-button label="Crear Nuevo Ticket" icon="pi pi-plus" severity="success" (onClick)="createTicket()"></p-button>
     </div>
 </p-toolbar>
@@ -34,7 +34,7 @@
                     <p-button icon="pi pi-eye" [text]="true" [rounded]="true" severity="info"
                         (onClick)="viewTicket(ticket.id)"></p-button>
                     <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger"
-                        (onClick)="deleteTicket(ticket.id)"></p-button>
+                        (onClick)="deleteTicket(ticket.id)" *ngIf="canDelete()"></p-button>
                 </td>
             </tr>
         </ng-template>

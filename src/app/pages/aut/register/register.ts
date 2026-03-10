@@ -134,7 +134,22 @@ export class RegisterPage {
         setTimeout(() => {
             // Guardar perfil en el servicio (localStorage)
             const { username, fullName, email, phone, address, birthDate, password } = this.registerForm.value;
-            this.userService.saveProfile({ username, fullName, email, phone, address, birthDate, password });
+            this.userService.saveProfile({ 
+                username, 
+                fullName, 
+                email, 
+                phone, 
+                address, 
+                birthDate, 
+                password,
+                role: 'reader', // Default role
+                permissions: {
+                    canAdd: false,
+                    canEdit: false,
+                    canDelete: false,
+                    canComment: false
+                }
+            });
 
             this.loading.set(false);
             this.messageService.add({
