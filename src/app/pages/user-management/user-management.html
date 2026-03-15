@@ -1,7 +1,13 @@
 <p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
 
 <div class="p-4">
-    <p-card header="Gestión de Usuarios">
+    <div class="flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de Usuarios</h2>
+        <p-button label="Nuevo Usuario" icon="pi pi-user-plus" severity="success" (onClick)="openAddDialog()"></p-button>
+    </div>
+
+    <p-card>
         <p-table [value]="users()" [paginator]="true" [rows]="10" responsiveLayout="scroll" [tableStyle]="{'min-width': '70rem'}">
             <ng-template pTemplate="header">
                 <tr>
@@ -12,7 +18,8 @@
                     <th class="text-center">Editar</th>
                     <th class="text-center">Eliminar</th>
                     <th class="text-center">Comentar</th>
-                    <th>Cambiar Permiso</th>
+                    <th>Cambiar Permisos</th>
+                    <th class="text-center">Acciones</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-user>
@@ -20,8 +27,8 @@
                     <td>{{user.fullName}}</td>
                     <td>{{user.email}}</td>
                     <td>
-                        <p-tag [value]="user.role === 'admin' ? 'Administrador' : 'Lector'" 
-                               [severity]="getRoleSeverity(user.role)">
+                        <p-tag [value]="user.permisoBase === 'admin' ? 'Administrador' : 'Lector'" 
+                               [severity]="getPermisoSeverity(user.permisoBase)">
                         </p-tag>
                     </td>
                     <td class="text-center">
@@ -37,14 +44,45 @@
                         <p-checkbox [(ngModel)]="user.permissions!.canComment" [binary]="true" (onChange)="onPermissionChange(user)"></p-checkbox>
                     </td>
                     <td>
-                        <p-select [options]="roles" 
-                                  [(ngModel)]="user.role" 
-                                  (onChange)="onRoleChange(user, $event)"
+                        <p-select [options]="permisosBaseLista" 
+                                  [(ngModel)]="user.permisoBase" 
+                                  (onChange)="onPermisoChange(user, $event)"
                                   appendTo="body">
                         </p-select>
+                    </td>
+                    <td class="text-center">
+                        <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" 
+                            (onClick)="deleteUser(user)" pTooltip="Eliminar Usuario"></p-button>
                     </td>
                 </tr>
             </ng-template>
         </p-table>
     </p-card>
 </div>
+
+<!-- Modal Añadir Usuario -->
+<p-dialog header="Crear Nuevo Usuario" [(visible)]="displayAddDialog" [modal]="true" [style]="{ width: '450px' }" styleClass="p-fluid">
+    <ng-template pTemplate="content">
+        <div class="field mb-3">
+            <label for="fullName">Nombre Completo</label>
+            <input pInputText id="fullName" [(ngModel)]="newUser.fullName" required placeholder="Ej: Juan Perez" />
+        </div>
+        <div class="field mb-3">
+            <label for="username">Username</label>
+            <input pInputText id="username" [(ngModel)]="newUser.username" required placeholder="Ej: juanp" />
+        </div>
+        <div class="field mb-3">
+            <label for="email">Email</label>
+            <input pInputText id="email" [(ngModel)]="newUser.email" required placeholder="Ej: juan@test.com" />
+        </div>
+        <div class="field mb-3">
+            <label for="permisoBase">Permiso Base</label>
+            <p-select id="permisoBase" [options]="permisosBaseLista" [(ngModel)]="newUser.permisoBase" appendTo="body"></p-select>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="displayAddDialog = false"></p-button>
+        <p-button label="Guardar" icon="pi pi-check" (onClick)="saveNewUser()"></p-button>
+    </ng-template>
+</p-dialog>

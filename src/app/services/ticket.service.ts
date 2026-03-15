@@ -1,54 +1,63 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, PLATFORM_ID, inject, forwardRef } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Ticket } from '../models/ticket.model';
+import { GroupService } from './group.service';
+
+const TICKETS_KEY = 'tickets_data_list';
 
 @Injectable({
     providedIn: 'root'
 })
 export class TicketService {
-    private ticketsSignal = signal<Ticket[]>([
-        {
-            id: 1,
-            titulo: 'Fix UI Bug in Dashboard',
-            descripcion: 'The card component is overflowing on mobile screens',
-            estado: 'Pendiente',
-            asignadoA: 'admin',
-            prioridad: 'Alta',
-            fechaCreacion: new Date('2026-03-01'),
-            fechaLimite: new Date('2026-03-10'),
-            comentarios: [],
-            historialCambios: [{ cambio: 'Ticket creado', fecha: new Date() }],
-            groupId: 1
-        },
-        {
-            id: 2,
-            titulo: 'Update PrimeNG',
-            descripcion: 'We need to upgrade library versions to get recent features.',
-            estado: 'En progreso',
-            asignadoA: 'admin',
-            prioridad: 'Media',
-            fechaCreacion: new Date('2026-03-02'),
-            fechaLimite: null,
-            comentarios: [{ autor: 'admin', texto: 'Started upgrading.', fecha: new Date() }],
-            historialCambios: [
-                { cambio: 'Ticket creado', fecha: new Date() },
-                { cambio: 'Estado cambiado a En progreso', fecha: new Date() }
-            ],
-            groupId: 1
-        },
-        {
-            id: 3,
-            titulo: 'Refactor Codebase',
-            descripcion: 'Move away from CSS classes to pure PrimeNG components',
-            estado: 'Revision',
-            asignadoA: 'user1',
-            prioridad: 'Baja',
-            fechaCreacion: new Date('2026-03-03'),
-            fechaLimite: new Date('2026-04-01'),
-            comentarios: [],
-            historialCambios: [{ cambio: 'Ticket creado', fecha: new Date() }],
-            groupId: 2
+    private ticketsSignal = signal<Ticket[]>([]);
+    private platformId = inject(PLATFORM_ID);
+    private groupService = inject(forwardRef(() => GroupService));
+
+    constructor() {
+        if (isPlatformBrowser(this.platformId)) {
+            this.loadTickets();
         }
-    ]);
+    }
+
+    private loadTickets() {
+        const raw = localStorage.getItem(TICKETS_KEY);
+        if (raw) {
+            const loaded = JSON.parse(raw);
+            // Re-convert dates back to Date objects
+            const sanitized = loaded.map((t: any) => ({
+                ...t,
+                fechaCreacion: new Date(t.fechaCreacion),
+                fechaLimite: t.fechaLimite ? new Date(t.fechaLimite) : null,
+                comentarios: t.comentarios.map((c: any) => ({ ...c, fecha: new Date(c.fecha) })),
+                historialCambios: t.historialCambios.map((h: any) => ({ ...h, fecha: new Date(h.fecha) }))
+            }));
+            this.ticketsSignal.set(sanitized);
+        } else {
+            const initialTickets: Ticket[] = [
+                {
+                    id: 1,
+                    titulo: 'Fix UI Bug in Dashboard',
+                    descripcion: 'The card component is overflowing on mobile screens',
+                    estado: 'Pendiente',
+                    asignadoA: 'admin',
+                    prioridad: 'Alta',
+                    fechaCreacion: new Date('2026-03-01'),
+                    fechaLimite: new Date('2026-03-10'),
+                    comentarios: [],
+                    historialCambios: [{ cambio: 'Ticket creado', fecha: new Date() }],
+                    groupId: 1
+                }
+            ];
+            this.ticketsSignal.set(initialTickets);
+            this.saveTickets();
+        }
+    }
+
+    private saveTickets() {
+        if (isPlatformBrowser(this.platformId)) {
+            localStorage.setItem(TICKETS_KEY, JSON.stringify(this.ticketsSignal()));
+        }
+    }
 
     get tickets() {
         return this.ticketsSignal.asReadonly();
@@ -72,6 +81,7 @@ export class TicketService {
             historialCambios: [{ cambio: 'Ticket creado', fecha: new Date() }]
         };
         this.ticketsSignal.update(ts => [...ts, newTicket]);
+        this.saveTickets();
         return newTicket;
     }
 
@@ -86,6 +96,7 @@ export class TicketService {
             }
             return t;
         }));
+        this.saveTickets();
     }
 
     addComment(id: number, autor: string, texto: string) {
@@ -98,9 +109,11 @@ export class TicketService {
             }
             return t;
         }));
+        this.saveTickets();
     }
 
     deleteTicket(id: number) {
         this.ticketsSignal.update(ts => ts.filter(t => t.id !== id));
+        this.saveTickets();
     }
 }

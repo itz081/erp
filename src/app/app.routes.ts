@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
-import { roleGuard } from './guards/role.guard';
+import { permisoGuard } from './guards/permiso.guard';
 
 export const routes: Routes = [
     {
@@ -51,7 +51,7 @@ export const routes: Routes = [
             },
             {
                 path: 'tickets/create',
-                canActivate: [roleGuard],
+                canActivate: [permisoGuard],
                 loadComponent: () =>
                     import('./pages/ticket-create/ticket-create').then((m) => m.TicketCreateComponent),
             },
@@ -62,7 +62,7 @@ export const routes: Routes = [
             },
             {
                 path: 'users-management',
-                canActivate: [roleGuard],
+                canActivate: [permisoGuard],
                 loadComponent: () =>
                     import('./pages/user-management/user-management').then((m) => m.UserManagementComponent),
             }

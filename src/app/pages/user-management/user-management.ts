@@ -1,15 +1,18 @@
 import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UserService, UserProfile, UserRole } from '../../services/user.service';
+import { UserService, UserProfile, PermisoBase } from '../../services/user.service';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { FormsModule } from '@angular/forms';
 import { CheckboxModule } from 'primeng/checkbox';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
     selector: 'app-user-management',
@@ -23,14 +26,18 @@ import { CheckboxModule } from 'primeng/checkbox';
         CardModule, 
         TagModule,
         FormsModule,
-        CheckboxModule
+        CheckboxModule,
+        DialogModule,
+        InputTextModule,
+        ConfirmDialogModule
     ],
-    providers: [MessageService],
+    providers: [MessageService, ConfirmationService],
     templateUrl: './user-management.html'
 })
 export class UserManagementComponent {
     private userService = inject(UserService);
     private messageService = inject(MessageService);
+    private confirmationService = inject(ConfirmationService);
 
     // Filter out the current logged-in user from the list
     users = computed(() => {
@@ -38,18 +45,29 @@ export class UserManagementComponent {
         return this.userService.getUsers()().filter(u => u.email !== currentUser?.email);
     });
     
-    roles: { label: string, value: UserRole }[] = [
+    permisosBaseLista: { label: string, value: PermisoBase }[] = [
         { label: 'Administrador', value: 'admin' },
         { label: 'Lector', value: 'reader' }
     ];
 
-    onRoleChange(user: UserProfile, event: any) {
-        const newRole: UserRole = event.value;
-        this.userService.updateUserRole(user.email, newRole);
+    displayAddDialog = false;
+    newUser: Partial<UserProfile> = {
+        permisoBase: 'reader',
+        permissions: {
+            canAdd: false,
+            canEdit: false,
+            canDelete: false,
+            canComment: true
+        }
+    };
+
+    onPermisoChange(user: UserProfile, event: any) {
+        const newPermiso: PermisoBase = event.value;
+        this.userService.updateUserPermisoBase(user.email, newPermiso);
         this.messageService.add({
             severity: 'success',
-            summary: 'Rol actualizado',
-            detail: `El usuario ${user.fullName} ahora es ${newRole === 'admin' ? 'Administrador' : 'Lector'}`
+            summary: 'Permiso base actualizado',
+            detail: `El usuario ${user.fullName} ahora es ${newPermiso === 'admin' ? 'Administrador' : 'Lector'}`
         });
     }
 
@@ -62,7 +80,60 @@ export class UserManagementComponent {
         });
     }
 
-    getRoleSeverity(role: UserRole) {
-        return role === 'admin' ? 'success' : 'info';
+    deleteUser(user: UserProfile) {
+        this.confirmationService.confirm({
+            message: `¿Estás seguro de que deseas eliminar permanentemente a ${user.fullName}?`,
+            header: 'Confirmar Eliminación',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.userService.deleteUser(user.email);
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Usuario eliminado',
+                    detail: `El usuario ${user.fullName} ha sido eliminado.`
+                });
+            }
+        });
+    }
+
+    openAddDialog() {
+        this.newUser = {
+            username: '',
+            fullName: '',
+            email: '',
+            password: 'User123!',
+            permisoBase: 'reader',
+            phone: '',
+            address: '',
+            birthDate: '',
+            permissions: {
+                canAdd: false,
+                canEdit: false,
+                canDelete: false,
+                canComment: true
+            }
+        };
+        this.displayAddDialog = true;
+    }
+
+    saveNewUser() {
+        if (!this.newUser.username || !this.newUser.email || !this.newUser.fullName) {
+            this.messageService.add({severity: 'error', summary: 'Error', detail: 'Por favor completa los campos básicos'});
+            return;
+        }
+
+        const emailExists = this.userService.getUsers()().some(u => u.email === this.newUser.email);
+        if (emailExists) {
+            this.messageService.add({severity: 'error', summary: 'Error', detail: 'El email ya está registrado'});
+            return;
+        }
+
+        this.userService.saveProfile(this.newUser as UserProfile);
+        this.messageService.add({severity: 'success', summary: 'Éxito', detail: 'Usuario creado correctamente'});
+        this.displayAddDialog = false;
+    }
+
+    getPermisoSeverity(permiso: PermisoBase) {
+        return permiso === 'admin' ? 'success' : 'info';
     }
 }

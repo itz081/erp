@@ -23,13 +23,13 @@ export class SidebarComponent implements OnInit {
   constructor() {
     effect(() => {
         const user = this.userService.getCurrentUser()();
-        this.buildMenu(user?.role);
+        this.buildMenu(user?.permisoBase);
     });
   }
 
   ngOnInit() { }
 
-  private buildMenu(role?: string) {
+  private buildMenu(permisoBase?: string) {
     const baseItems: MenuItem[] = [
       {
         label: 'Dashboard',
@@ -53,7 +53,7 @@ export class SidebarComponent implements OnInit {
       }
     ];
 
-    if (role === 'admin') {
+    if (permisoBase === 'admin') {
         baseItems.push({
             label: 'Gestión Usuarios',
             icon: 'pi pi-cog',

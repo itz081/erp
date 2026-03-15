@@ -6,17 +6,18 @@ import { TableModule } from 'primeng/table';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { FormsModule } from '@angular/forms';
 import { GroupService } from '../../services/group.service';
-import { UserService } from '../../services/user.service';
+import { UserService, UserProfile } from '../../services/user.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
 @Component({
     selector: 'app-group-manage',
     standalone: true,
-    imports: [CommonModule, CardModule, TableModule, ToolbarModule, ButtonModule, InputTextModule, ConfirmDialogModule, ToastModule, FormsModule],
+    imports: [CommonModule, CardModule, TableModule, ToolbarModule, ButtonModule, InputTextModule, SelectModule, ConfirmDialogModule, ToastModule, FormsModule],
     providers: [ConfirmationService, MessageService],
     templateUrl: './group-manage.html',
     styles: []
@@ -31,9 +32,24 @@ export class GroupManageComponent implements OnInit {
 
     groupId = signal<number>(0);
     group = computed(() => this.groupService.getGroup(this.groupId()));
+    
+    // Get users that are NOT in the current group
+    availableUsers = computed(() => {
+        const members = this.group()?.miembros || [];
+        return this.userService.getUsers()().filter(u => !members.some(m => m.email === u.email));
+    });
 
-    newUserEmail = '';
-    newUsername = '';
+    selectedUser: UserProfile | null = null;
+
+    canAdd = computed(() => {
+        const user = this.userService.getCurrentUser()();
+        return user?.permisoBase === 'admin' || (user?.permissions?.canAdd ?? false);
+    });
+
+    canDelete = computed(() => {
+        const user = this.userService.getCurrentUser()();
+        return user?.permisoBase === 'admin' || (user?.permissions?.canDelete ?? false);
+    });
 
     ngOnInit() {
         this.route.params.subscribe(params => {
@@ -42,13 +58,12 @@ export class GroupManageComponent implements OnInit {
     }
 
     addUser() {
-        if (this.newUsername && this.newUserEmail) {
-            this.groupService.addUserToGroup(this.groupId(), this.newUsername, this.newUserEmail);
+        if (this.selectedUser) {
+            this.groupService.addUserToGroup(this.groupId(), this.selectedUser.username, this.selectedUser.email);
             this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario añadido al grupo' });
-            this.newUsername = '';
-            this.newUserEmail = '';
+            this.selectedUser = null;
         } else {
-            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Faltan datos del usuario' });
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Por favor selecciona un usuario' });
         }
     }
 

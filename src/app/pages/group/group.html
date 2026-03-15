@@ -15,35 +15,37 @@
         </ng-template>
     </p-toolbar>
 
-    <p-table #dt [value]="groups" [rows]="10" [paginator]="true"
-        [globalFilterFields]="['name','category','level','author']" [tableStyle]="{'min-width': '60rem'}"
+    <p-table #dt [value]="groups()" [rows]="10" [paginator]="true"
+        [globalFilterFields]="['nombre', 'categoria', 'nivel', 'autor']" [tableStyle]="{'min-width': '50rem'}"
         [rowHover]="true" dataKey="id">
         <ng-template pTemplate="header">
             <tr>
                 <th pSortableColumn="id">ID <p-sortIcon field="id" /></th>
-                <th pSortableColumn="name">Nombre <p-sortIcon field="name" /></th>
-                <th pSortableColumn="category">Categoría <p-sortIcon field="category" /></th>
-                <th pSortableColumn="level">Nivel <p-sortIcon field="level" /></th>
-                <th pSortableColumn="author">Autor <p-sortIcon field="author" /></th>
-                <th pSortableColumn="members">Miembros <p-sortIcon field="members" /></th>
-                <th pSortableColumn="tickets">Tickets <p-sortIcon field="tickets" /></th>
+                <th pSortableColumn="nombre">Nombre <p-sortIcon field="nombre" /></th>
+                <th pSortableColumn="categoria">Categoría <p-sortIcon field="categoria" /></th>
+                <th pSortableColumn="nivel">Nivel <p-sortIcon field="nivel" /></th>
+                <th pSortableColumn="autor">Autor <p-sortIcon field="autor" /></th>
+                <th>Miembros</th>
+                <th>Tickets</th>
                 <th>Acciones</th>
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-group>
             <tr>
                 <td>{{group.id}}</td>
-                <td>{{group.name}}</td>
-                <td>{{group.category}}</td>
-                <td>{{group.level}}</td>
-                <td>{{group.author}}</td>
-                <td>{{group.members}}</td>
-                <td>{{group.tickets}}</td>
+                <td>{{group.nombre}}</td>
+                <td>{{group.categoria || 'N/A'}}</td>
+                <td>{{group.nivel || 'N/A'}}</td>
+                <td>{{group.autor || 'N/A'}}</td>
+                <td>{{group.miembros.length}}</td>
+                <td>{{group.tickets.length}}</td>
                 <td>
+                    <p-button icon="pi pi-eye" class="mr-2" rounded="true" text="true" severity="primary"
+                        (onClick)="viewGroup(group)" pTooltip="Ver Detalles" />
                     <p-button icon="pi pi-pencil" class="mr-2" rounded="true" text="true" severity="info"
-                        (onClick)="editGroup(group)" *ngIf="canEdit()" />
+                        (onClick)="editGroup(group)" *ngIf="canEdit()" pTooltip="Editar" />
                     <p-button icon="pi pi-trash" severity="danger" rounded="true" text="true"
-                        (onClick)="deleteGroup(group)" *ngIf="canDelete()" />
+                        (onClick)="deleteGroup(group)" *ngIf="canDelete()" pTooltip="Eliminar" />
                 </td>
             </tr>
         </ng-template>
@@ -61,38 +63,28 @@
     <ng-template pTemplate="content">
 
         <div class="field mb-4">
-            <label for="name">Nombre</label>
-            <input type="text" pInputText id="name" [(ngModel)]="groupItem.name" required autofocus />
-            <small class="p-error" *ngIf="submitted && !groupItem.name">El Nombre es requerido.</small>
+            <label for="nombre">Nombre</label>
+            <input type="text" pInputText id="nombre" [(ngModel)]="groupItem.nombre" required autofocus />
+            <small class="p-error" *ngIf="submitted && !groupItem.nombre">El Nombre es requerido.</small>
         </div>
 
         <div class="field mb-4">
-            <label for="category">Categoría</label>
-            <p-select id="category" [options]="categoryOptions" [(ngModel)]="groupItem.category" optionLabel="label"
-                optionValue="value" placeholder="Selecciona una Categoría" appendTo="body"></p-select>
+            <label for="categoria">Categoría</label>
+            <p-select id="categoria" [options]="categoryOptions" [(ngModel)]="groupItem.categoria" placeholder="Seleccione Categoría"
+                appendTo="body"></p-select>
         </div>
 
         <div class="field mb-4">
-            <label for="level">Nivel</label>
-            <p-select id="level" [options]="levelOptions" [(ngModel)]="groupItem.level" optionLabel="label"
-                optionValue="value" placeholder="Selecciona un Nivel" appendTo="body"></p-select>
+            <label for="nivel">Nivel</label>
+            <p-select id="nivel" [options]="levelOptions" [(ngModel)]="groupItem.nivel" placeholder="Seleccione Nivel"
+                appendTo="body"></p-select>
         </div>
 
         <div class="field mb-4">
-            <label for="author">Autor</label>
-            <input type="text" pInputText id="author" [(ngModel)]="groupItem.author" />
+            <label for="autor">Autor</label>
+            <input type="text" pInputText id="autor" [(ngModel)]="groupItem.autor" placeholder="Nombre del autor" />
         </div>
 
-        <div class="formgrid grid">
-            <div class="field col mb-4">
-                <label for="members">Miembros</label>
-                <p-inputNumber id="members" [(ngModel)]="groupItem.members"></p-inputNumber>
-            </div>
-            <div class="field col mb-4">
-                <label for="tickets">Tickets</label>
-                <p-inputNumber id="tickets" [(ngModel)]="groupItem.tickets"></p-inputNumber>
-            </div>
-        </div>
     </ng-template>
 
     <ng-template pTemplate="footer">

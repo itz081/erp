@@ -8,14 +8,19 @@ import { ButtonModule } from 'primeng/button';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
+import { DragDropModule } from 'primeng/dragdrop';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 import { TicketService } from '../../services/ticket.service';
 import { GroupService } from '../../services/group.service';
+import { UserService } from '../../services/user.service';
 import { Ticket } from '../../models/ticket.model';
 
 @Component({
     selector: 'app-group-view',
     standalone: true,
-    imports: [CommonModule, CardModule, TableModule, ToolbarModule, ButtonModule, ToggleButtonModule, DialogModule, FormsModule],
+    imports: [CommonModule, CardModule, TableModule, ToolbarModule, ButtonModule, ToggleButtonModule, DialogModule, FormsModule, DragDropModule, ToastModule],
+    providers: [MessageService],
     templateUrl: './group-view.html',
     styles: []
 })
@@ -57,5 +62,42 @@ export class GroupViewComponent implements OnInit {
 
     manageGroup() {
         this.router.navigate(['/home/groups/manage', this.groupId()]);
+    }
+
+    draggedTicket: Ticket | null = null;
+    messageService = inject(MessageService);
+    userService = inject(UserService);
+
+    canMoveTicket(ticket: Ticket): boolean {
+        const user: any = this.userService.getCurrentUser()();
+        if (!user) return false;
+        if (user.permisoBase === 'admin') return true;
+        return ticket.asignadoA === user.username;
+    }
+
+    dragStart(ticket: Ticket) {
+        if (this.canMoveTicket(ticket)) {
+            this.draggedTicket = ticket;
+        } else {
+            this.draggedTicket = null;
+            this.messageService.add({ 
+                severity: 'error', 
+                summary: 'Permiso Denegado', 
+                detail: 'Solo el administrador o el usuario asignado pueden mover este ticket de estado.', 
+                life: 3000 
+            });
+        }
+    }
+
+    dragEnd() {
+        this.draggedTicket = null;
+    }
+
+    drop(event: any, newStatus: string) {
+        if (this.draggedTicket && this.draggedTicket.estado !== newStatus) {
+            // Update the ticket status using TicketService
+            this.ticketService.updateTicket(this.draggedTicket.id, { estado: newStatus as Ticket['estado'] });
+        }
+        this.draggedTicket = null;
     }
 }

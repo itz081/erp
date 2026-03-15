@@ -12,6 +12,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { TicketService } from '../../services/ticket.service';
 import { GroupService } from '../../services/group.service';
+import { UserService, UserProfile } from '../../services/user.service';
 
 @Component({
     selector: 'app-ticket-create',
@@ -25,6 +26,7 @@ export class TicketCreateComponent implements OnInit {
     fb = inject(FormBuilder);
     ticketService = inject(TicketService);
     groupService = inject(GroupService);
+    userService = inject(UserService);
     router = inject(Router);
     messageService = inject(MessageService);
 
@@ -34,7 +36,7 @@ export class TicketCreateComponent implements OnInit {
     estados = ['Pendiente', 'En progreso', 'Revision', 'Finalizado'];
     groups = computed(() => this.groupService.groups());
 
-    selectedGroupMembers: any[] = [];
+    assignableUsers: any[] = [];
 
     ngOnInit() {
         this.ticketForm = this.fb.group({
@@ -50,10 +52,25 @@ export class TicketCreateComponent implements OnInit {
         this.ticketForm.get('groupId')?.valueChanges.subscribe(groupId => {
             if (groupId) {
                 const group = this.groupService.getGroup(groupId);
-                this.selectedGroupMembers = group ? group.miembros : [];
-                this.ticketForm.patchValue({ asignadoA: null });
+                const miembros = group ? group.miembros : [];
+                const currentUser = this.userService.getCurrentUser()();
+
+                if (currentUser?.permisoBase === 'admin') {
+                    this.assignableUsers = miembros;
+                } else if (currentUser) {
+                    // Usuario regular: solo puede asignarse a sí mismo, siempre que sea miembro del grupo
+                    const isMember = miembros.some((m: any) => m.username === currentUser.username);
+                    this.assignableUsers = isMember ? [currentUser] : [];
+                }
+
+                if (this.assignableUsers.length > 0) {
+                    this.ticketForm.patchValue({ asignadoA: this.assignableUsers[0] });
+                } else {
+                    this.ticketForm.patchValue({ asignadoA: null });
+                }
             } else {
-                this.selectedGroupMembers = [];
+                this.assignableUsers = [];
+                this.ticketForm.patchValue({ asignadoA: null });
             }
         });
     }

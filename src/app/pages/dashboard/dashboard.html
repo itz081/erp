@@ -2,27 +2,50 @@
     <div class="p-toolbar-group-start">
         <h2>Dashboard</h2>
     </div>
-    <div class="p-toolbar-group-end">
-        <p-button label="Crear Ticket" icon="pi pi-plus" (onClick)="createTicket()"></p-button>
+    <div class="p-toolbar-group-end mr-4">
+        <p-button *ngIf="canAdd()" label="Crear Ticket" icon="pi pi-plus" (onClick)="createTicket()"></p-button>
     </div>
 </p-toolbar>
 
-<div class="grid mt-3">
-    <div class="col-12 md:col-6">
-        <p-card header="Seleccionar Grupo">
-            <p-select [options]="groups()" [(ngModel)]="selectedGroup" optionLabel="nombre"
-                placeholder="Selecciona un grupo para ver detalles" (onChange)="onGroupSelect($event)"
-                class="w-full"></p-select>
+<div class="grid mt-3 mr-3 ml-3">
+    <div class="col-12 md:col-8">
+        <p-card header="Todos los Grupos">
+            <p-table [value]="groups()" [paginator]="true" [rows]="5" responsiveLayout="scroll">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Nombre</th>
+                        <th class="text-center">Miembros</th>
+                        <th class="text-center">Tickets</th>
+                        <th class="text-center">Acción</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-group>
+                    <tr>
+                        <td>{{group.nombre}}</td>
+                        <td class="text-center">{{group.miembros.length}}</td>
+                        <td class="text-center">{{group.tickets.length}}</td>
+                        <td class="text-center">
+                            <p-button icon="pi pi-eye" [rounded]="true" [text]="true" 
+                                (onClick)="onGroupSelect({value: group})"></p-button>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="4">No hay grupos creados.</td>
+                    </tr>
+                </ng-template>
+            </p-table>
         </p-card>
     </div>
-    <div class="col-12 md:col-6">
+    <div class="col-12 md:col-4">
         <p-card header="Estadísticas de Tickets">
             <p-chart type="pie" [data]="chartData" [options]="chartOptions" height="250px"></p-chart>
         </p-card>
     </div>
 </div>
 
-<div class="mt-4">
+<div class="mt-4 mr-3 ml-3">
     <p-card header="Resumen de Tickets Recientes">
         <p-table [value]="allTickets()" [paginator]="true" [rows]="5" responsiveLayout="scroll">
             <ng-template pTemplate="header">
@@ -31,7 +54,7 @@
                     <th>Estado</th>
                     <th>Prioridad</th>
                     <th>Fecha Límite</th>
-                    <th>Acciones</th>
+                    <th class="text-center">Acciones</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-ticket>
@@ -40,7 +63,7 @@
                     <td>{{ticket.estado}}</td>
                     <td>{{ticket.prioridad}}</td>
                     <td>{{ticket.fechaLimite | date}}</td>
-                    <td>
+                    <td class="text-center">
                         <p-button icon="pi pi-eye" [rounded]="true" [text]="true"
                             (onClick)="viewTicket(ticket.id)"></p-button>
                     </td>

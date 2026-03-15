@@ -1,7 +1,7 @@
 import { Injectable, signal, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
-export type UserRole = 'admin' | 'reader';
+export type PermisoBase = 'admin' | 'reader';
 
 export interface UserPermissions {
     canAdd: boolean;
@@ -19,7 +19,7 @@ export interface UserProfile {
     birthDate: string;
     password: string;
     groupIds?: number[];
-    role: UserRole;
+    permisoBase: PermisoBase;
     permissions: UserPermissions;
 }
 
@@ -45,18 +45,29 @@ export class UserService {
         if (!isPlatformBrowser(this.platformId)) return;
         const raw = localStorage.getItem(USERS_KEY);
         if (raw) {
-            const loadedUsers: UserProfile[] = JSON.parse(raw);
+            const loadedUsers: any[] = JSON.parse(raw);
             
             // Migration: Ensure all users have the permissions object
-            const sanitizedUsers = loadedUsers.map(user => ({
-                ...user,
-                permissions: user.permissions || {
-                    canAdd: false,
-                    canEdit: false,
-                    canDelete: false,
-                    canComment: false
-                }
-            }));
+            const sanitizedUsers = loadedUsers.map(user => {
+                const permisoBase = user.permisoBase || user.role || 'reader';
+                const permissions = permisoBase === 'admin'
+                    ? { canAdd: true, canEdit: true, canDelete: true, canComment: true }
+                    : (user.permissions || {
+                        canAdd: false,
+                        canEdit: false,
+                        canDelete: false,
+                        canComment: true
+                    });
+                
+                // Cleanup old property if exists
+                if (user.role) delete user.role;
+                
+                return {
+                    ...user,
+                    permisoBase,
+                    permissions
+                };
+            });
             
             this.usersSignal.set(sanitizedUsers);
         } else {
@@ -68,7 +79,7 @@ export class UserService {
                 address: 'Calle Falsa 123',
                 birthDate: '1990-01-01',
                 password: 'Admin123!',
-                role: 'admin',
+                permisoBase: 'admin',
                 permissions: {
                     canAdd: true,
                     canEdit: true,
@@ -91,7 +102,19 @@ export class UserService {
         if (!isPlatformBrowser(this.platformId)) return;
         const raw = localStorage.getItem(CURRENT_USER_KEY);
         if (raw) {
-            this.currentUserSignal.set(JSON.parse(raw));
+            const user = JSON.parse(raw);
+            const permisoBase = user.permisoBase || user.role || 'reader';
+            const permissions = permisoBase === 'admin'
+                ? { canAdd: true, canEdit: true, canDelete: true, canComment: true }
+                : (user.permissions || {
+                    canAdd: false,
+                    canEdit: false,
+                    canDelete: false,
+                    canComment: true
+                });
+            if (user.role) delete user.role;
+
+            this.currentUserSignal.set({ ...user, permisoBase, permissions });
         }
     }
 
@@ -113,13 +136,13 @@ export class UserService {
         return this.usersSignal.asReadonly();
     }
 
-    updateUserRole(email: string, role: UserRole): void {
+    updateUserPermisoBase(email: string, permisoBase: PermisoBase): void {
         this.usersSignal.update(users => users.map(u => {
             if (u.email === email) {
-                const permissions = role === 'admin' 
+                const permissions = permisoBase === 'admin' 
                     ? { canAdd: true, canEdit: true, canDelete: true, canComment: true }
                     : u.permissions;
-                return { ...u, role, permissions };
+                return { ...u, permisoBase, permissions };
             }
             return u;
         }));
@@ -127,10 +150,10 @@ export class UserService {
         
         const currentUser = this.currentUserSignal();
         if (currentUser && currentUser.email === email) {
-            const permissions = role === 'admin' 
+            const permissions = permisoBase === 'admin' 
                 ? { canAdd: true, canEdit: true, canDelete: true, canComment: true }
                 : currentUser.permissions;
-            this.setCurrentUser({ ...currentUser, role, permissions });
+            this.setCurrentUser({ ...currentUser, permisoBase, permissions });
         }
     }
 
@@ -170,6 +193,11 @@ export class UserService {
 
     clearProfile(): void {
         this.setCurrentUser(null);
+    }
+
+    deleteUser(email: string): void {
+        this.usersSignal.update(users => users.filter(u => u.email !== email));
+        this.saveUsers();
     }
 
     validateCredentials(email: string, pass: string): UserProfile | null {

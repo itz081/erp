@@ -24,7 +24,7 @@
                         <td>{{member.username}}</td>
                         <td>{{member.email}}</td>
                         <td>
-                            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                            <p-button *ngIf="canDelete()" icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
                                 (onClick)="confirmRemoveUser(member.username)"></p-button>
                         </td>
                     </tr>
@@ -38,20 +38,30 @@
         </p-card>
     </div>
 
-    <div class="col-12 md:col-4">
+    <div class="col-12 md:col-4" *ngIf="canAdd()">
         <p-card header="Añadir Miembro">
             <div class="flex flex-column gap-3">
                 <div class="flex flex-column gap-2">
-                    <label for="username">Username</label>
-                    <input pInputText id="username" [(ngModel)]="newUsername" placeholder="Ingresa username" />
-                </div>
-                <div class="flex flex-column gap-2">
-                    <label for="email">Email</label>
-                    <input pInputText id="email" [(ngModel)]="newUserEmail" placeholder="Ingresa email" />
+                    <label for="userSelect">Seleccionar Usuario</label>
+                    <p-select id="userSelect" [options]="availableUsers()" [(ngModel)]="selectedUser" 
+                        optionLabel="fullName" placeholder="Busca un usuario" [filter]="true" filterBy="fullName"
+                        appendTo="body" class="w-full">
+                        <ng-template pTemplate="selectedItem" let-selectedOption>
+                            <div class="flex align-items-center gap-2">
+                                <div>{{ selectedOption.fullName }} ({{ selectedOption.username }})</div>
+                            </div>
+                        </ng-template>
+                        <ng-template let-user pTemplate="item">
+                            <div class="flex flex-column gap-1">
+                                <div class="font-bold">{{ user.fullName }}</div>
+                                <div class="text-sm text-500">{{ user.email }}</div>
+                            </div>
+                        </ng-template>
+                    </p-select>
                 </div>
                 <p-button label="Añadir al Grupo" icon="pi pi-user-plus" (onClick)="addUser()"
-                    [disabled]="!newUsername || !newUserEmail"></p-button>
+                    [disabled]="!selectedUser"></p-button>
             </div>
         </p-card>
     </div>
-</div>
+</div>

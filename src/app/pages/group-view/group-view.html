@@ -1,3 +1,4 @@
+<p-toast></p-toast>
 <p-toolbar *ngIf="group()">
     <div class="p-toolbar-group-start">
         <h2>Grupo: {{ group()?.nombre }}</h2>
@@ -9,76 +10,97 @@
     </div>
 </p-toolbar>
 
-<div class="mt-4" *ngIf="group()">
-    <!-- Vista Lista -->
-    <ng-container *ngIf="!isKanban">
-        <p-card>
-            <p-table [value]="groupTickets()" [paginator]="true" [rows]="10" responsiveLayout="scroll"
-                [globalFilterFields]="['titulo', 'estado', 'prioridad']">
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th pSortableColumn="titulo">Título <p-sortIcon field="titulo"></p-sortIcon></th>
-                        <th pSortableColumn="estado">Estado <p-sortIcon field="estado"></p-sortIcon></th>
-                        <th pSortableColumn="prioridad">Prioridad <p-sortIcon field="prioridad"></p-sortIcon></th>
-                        <th pSortableColumn="fechaCreacion">Fecha Creación <p-sortIcon
-                                field="fechaCreacion"></p-sortIcon></th>
-                        <th pSortableColumn="fechaLimite">Fecha Límite <p-sortIcon field="fechaLimite"></p-sortIcon>
-                        </th>
-                        <th>Acciones</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-ticket>
-                    <tr>
-                        <td>{{ticket.titulo}}</td>
-                        <td>{{ticket.estado}}</td>
-                        <td>{{ticket.prioridad}}</td>
-                        <td>{{ticket.fechaCreacion | date}}</td>
-                        <td>{{ticket.fechaLimite | date}}</td>
-                        <td>
-                            <p-button icon="pi pi-eye" [text]="true" [rounded]="true"
-                                (onClick)="openPreview(ticket)"></p-button>
-                            <p-button icon="pi pi-arrow-right" [text]="true" [rounded]="true"
-                                (onClick)="viewFullDetail(ticket.id)"></p-button>
-                        </td>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="emptymessage">
-                    <tr>
-                        <td colspan="6">No se encontraron tickets.</td>
-                    </tr>
-                </ng-template>
-            </p-table>
-        </p-card>
-    </ng-container>
+<div class="grid mt-4" *ngIf="group()">
+    <div class="col-12 md:col-9">
+        <!-- Vista Lista -->
+        <ng-container *ngIf="!isKanban">
+            <p-card header="Tickets del Grupo">
+                <p-table [value]="groupTickets()" [paginator]="true" [rows]="10" responsiveLayout="scroll"
+                    [globalFilterFields]="['titulo', 'estado', 'prioridad']">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th pSortableColumn="titulo">Título <p-sortIcon field="titulo"></p-sortIcon></th>
+                            <th pSortableColumn="estado">Estado <p-sortIcon field="estado"></p-sortIcon></th>
+                            <th pSortableColumn="prioridad">Prioridad <p-sortIcon field="prioridad"></p-sortIcon></th>
+                            <th pSortableColumn="fechaLimite">Fecha Límite <p-sortIcon field="fechaLimite"></p-sortIcon>
+                            </th>
+                            <th>Acciones</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-ticket>
+                        <tr>
+                            <td>{{ticket.titulo}}</td>
+                            <td>{{ticket.estado}}</td>
+                            <td>{{ticket.prioridad}}</td>
+                            <td>{{ticket.fechaLimite | date}}</td>
+                            <td>
+                                <p-button icon="pi pi-eye" [text]="true" [rounded]="true"
+                                    (onClick)="openPreview(ticket)"></p-button>
+                                <p-button icon="pi pi-arrow-right" [text]="true" [rounded]="true"
+                                    (onClick)="viewFullDetail(ticket.id)"></p-button>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="5">No se encontraron tickets en este grupo.</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </p-card>
+        </ng-container>
 
-    <!-- Vista Kanban -->
-    <ng-container *ngIf="isKanban">
-        <div class="grid">
-            <div class="col-12 md:col-3" *ngFor="let status of statuses">
-                <p-card [header]="status" styleClass="h-full bg-black-alpha-10">
-                    <div class="flex flex-column gap-3">
-                        <ng-container *ngFor="let ticket of getTicketsByStatus(status)">
-                            <p-card>
-                                <div class="flex justify-content-between align-items-center mb-2">
-                                    <span class="font-bold">{{ticket.titulo}}</span>
-                                    <p-button icon="pi pi-eye" [text]="true" [rounded]="true" size="small"
-                                        (onClick)="openPreview(ticket)"></p-button>
+        <!-- Vista Kanban -->
+        <ng-container *ngIf="isKanban">
+            <div class="grid">
+                <div class="col-12 md:col-3" *ngFor="let status of statuses" pDroppable (onDrop)="drop($event, status)">
+                    <p-card [header]="status" styleClass="h-full bg-black-alpha-10 card-compact" [style]="{'min-height': '20rem'}">
+                        <div class="flex flex-column gap-3">
+                            <ng-container *ngFor="let ticket of getTicketsByStatus(status)">
+                                <div pDraggable (onDragStart)="dragStart(ticket)" (onDragEnd)="dragEnd()">
+                                    <p-card styleClass="mb-2 shadow-1 cursor-move" pTooltip="Arrastra para mover">
+                                        <div class="flex justify-content-between align-items-center mb-2">
+                                            <span class="font-bold">{{ticket.titulo}}</span>
+                                            <p-button icon="pi pi-eye" [text]="true" [rounded]="true" size="small"
+                                                (onClick)="openPreview(ticket)"></p-button>
+                                        </div>
+                                        <div class="mt-2 flex justify-content-between text-xs">
+                                            <span>P: {{ticket.prioridad}}</span>
+                                            <span>{{ticket.asignadoA}}</span>
+                                        </div>
+                                    </p-card>
                                 </div>
-                                <p class="text-sm text-600 m-0">{{ticket.descripcion | slice:0:50}}...</p>
-                                <div class="mt-2 flex justify-content-between text-xs">
-                                    <span>P: {{ticket.prioridad}}</span>
-                                    <span>Asignado: {{ticket.asignadoA}}</span>
-                                </div>
-                            </p-card>
-                        </ng-container>
-                        <div *ngIf="getTicketsByStatus(status).length === 0" class="text-center text-500 py-3">
-                            No hay tickets
+                            </ng-container>
+                            <div *ngIf="getTicketsByStatus(status).length === 0" class="text-center text-500 py-3">
+                                Vacío
+                            </div>
                         </div>
-                    </div>
-                </p-card>
+                    </p-card>
+                </div>
             </div>
-        </div>
-    </ng-container>
+        </ng-container>
+    </div>
+
+    <!-- Sidebar de Miembros -->
+    <div class="col-12 md:col-3">
+        <p-card header="Miembros ({{group()?.miembros?.length}})">
+            <div class="flex flex-column gap-2">
+                <div *ngFor="let member of group()?.miembros" class="flex align-items-center gap-3 p-2 border-round hover:surface-100">
+                    <div class="w-2rem h-2rem border-circle bg-primary flex align-items-center justify-content-center text-white">
+                        {{ member.username.charAt(0).toUpperCase() }}
+                    </div>
+                    <div class="flex flex-column">
+                        <span class="font-medium">{{ member.username }}</span>
+                        <span class="text-xs text-500">{{ member.email }}</span>
+                    </div>
+                </div>
+                <div *ngIf="group()?.miembros?.length === 0" class="text-500 text-center py-5">
+                    <i class="pi pi-users text-4xl mb-2"></i>
+                    <p>No hay miembros</p>
+                </div>
+            </div>
+        </p-card>
+    </div>
 </div>
 
 <!-- Modal Overview -->

@@ -10,6 +10,7 @@ import { ButtonModule } from 'primeng/button';
 import { FormsModule } from '@angular/forms';
 import { TicketService } from '../../services/ticket.service';
 import { GroupService } from '../../services/group.service';
+import { UserService } from '../../services/user.service';
 
 @Component({
     selector: 'app-dashboard',
@@ -21,13 +22,29 @@ import { GroupService } from '../../services/group.service';
 export class DashboardComponent implements OnInit {
     ticketService = inject(TicketService);
     groupService = inject(GroupService);
+    userService = inject(UserService);
     router = inject(Router);
+
+    canAdd = computed(() => {
+        const user: any = this.userService.getCurrentUser()();
+        return user?.permisoBase === 'admin' || (user?.permissions?.canAdd ?? false);
+    });
 
     chartData: any;
     chartOptions: any;
 
     selectedGroup: any;
-    groups = computed(() => this.groupService.groups());
+    groups = computed(() => {
+        // Obtenemos los grupos y le asignamos cuántos tickets tienen en la realidad basados
+        // en el TicketService, no solo la propiedad anidada.
+        const gs = this.groupService.groups();
+        const ts = this.ticketService.tickets();
+        return gs.map(g => ({
+            ...g,
+            tickets: ts.filter(t => t.groupId === g.id) // Contar dinámicamente
+        }));
+    });
+    
     allTickets = computed(() => this.ticketService.tickets());
 
     ngOnInit() {
