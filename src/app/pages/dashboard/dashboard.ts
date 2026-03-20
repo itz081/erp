@@ -35,13 +35,11 @@ export class DashboardComponent implements OnInit {
 
     selectedGroup: any;
     groups = computed(() => {
-        // Obtenemos los grupos y le asignamos cuántos tickets tienen en la realidad basados
-        // en el TicketService, no solo la propiedad anidada.
         const gs = this.groupService.groups();
         const ts = this.ticketService.tickets();
         return gs.map(g => ({
             ...g,
-            tickets: ts.filter(t => t.groupId === g.id) // Contar dinámicamente
+            tickets: ts.filter(t => t.groupId === g.id) 
         }));
     });
     
