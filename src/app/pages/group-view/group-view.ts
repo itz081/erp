@@ -64,6 +64,16 @@ export class GroupViewComponent implements OnInit {
         this.router.navigate(['/home/groups/manage', this.groupId()]);
     }
 
+    canAddTicket(): boolean {
+        const user: any = this.userService.getCurrentUser()();
+        if (!user) return false;
+        return user.permisoBase === 'admin' || (user.ticketPermissions?.canAdd ?? user.permissions?.canAdd ?? false);
+    }
+
+    createTicketInGroup() {
+        this.router.navigate(['/home/tickets/create'], { queryParams: { groupId: this.groupId() } });
+    }
+
     draggedTicket: Ticket | null = null;
     messageService = inject(MessageService);
     userService = inject(UserService);

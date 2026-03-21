@@ -49,16 +49,16 @@ export class GroupComponent implements OnInit {
   });
   
   canAdd = computed(() => {
-    const user = this.userService.getCurrentUser()();
-    return user?.permisoBase === 'admin' || (user?.permissions?.canAdd ?? false);
+    const user: any = this.userService.getCurrentUser()();
+    return user?.permisoBase === 'admin' || (user?.groupPermissions?.canAdd ?? user?.permissions?.canAdd ?? false);
   });
   canEdit = computed(() => {
-    const user = this.userService.getCurrentUser()();
-    return user?.permisoBase === 'admin' || (user?.permissions?.canEdit ?? false);
+    const user: any = this.userService.getCurrentUser()();
+    return user?.permisoBase === 'admin' || (user?.groupPermissions?.canEdit ?? user?.permissions?.canEdit ?? false);
   });
   canDelete = computed(() => {
-    const user = this.userService.getCurrentUser()();
-    return user?.permisoBase === 'admin' || (user?.permissions?.canDelete ?? false);
+    const user: any = this.userService.getCurrentUser()();
+    return user?.permisoBase === 'admin' || (user?.groupPermissions?.canDelete ?? user?.permissions?.canDelete ?? false);
   });
 
   groupItem: Partial<Group> = {};

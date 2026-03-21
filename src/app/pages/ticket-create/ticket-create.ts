@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -28,6 +28,7 @@ export class TicketCreateComponent implements OnInit {
     groupService = inject(GroupService);
     userService = inject(UserService);
     router = inject(Router);
+    route = inject(ActivatedRoute);
     messageService = inject(MessageService);
 
     ticketForm!: FormGroup;
@@ -71,6 +72,14 @@ export class TicketCreateComponent implements OnInit {
             } else {
                 this.assignableUsers = [];
                 this.ticketForm.patchValue({ asignadoA: null });
+            }
+        });
+
+        this.route.queryParams.subscribe(params => {
+            if (params['groupId']) {
+                setTimeout(() => {
+                    this.ticketForm.patchValue({ groupId: Number(params['groupId']) });
+                });
             }
         });
     }

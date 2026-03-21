@@ -47,17 +47,22 @@ export class UserManagementComponent {
     
     permisosBaseLista: { label: string, value: PermisoBase }[] = [
         { label: 'Administrador', value: 'admin' },
-        { label: 'Lector', value: 'reader' }
+        { label: 'User', value: 'user' }
     ];
 
     displayAddDialog = false;
     newUser: Partial<UserProfile> = {
-        permisoBase: 'reader',
-        permissions: {
+        permisoBase: 'user',
+        groupPermissions: {
             canAdd: false,
             canEdit: false,
             canDelete: false,
             canComment: true
+        },
+        ticketPermissions: {
+            canAdd: false,
+            canEdit: false,
+            canDelete: false
         }
     };
 
@@ -67,17 +72,19 @@ export class UserManagementComponent {
         this.messageService.add({
             severity: 'success',
             summary: 'Permiso base actualizado',
-            detail: `El usuario ${user.fullName} ahora es ${newPermiso === 'admin' ? 'Administrador' : 'Lector'}`
+            detail: `El usuario ${user.fullName} ahora es ${newPermiso === 'admin' ? 'Administrador' : 'User'}`
         });
     }
 
     onPermissionChange(user: UserProfile) {
-        this.userService.updateUserPermissions(user.email, user.permissions);
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Permisos actualizados',
-            detail: `Permisos de ${user.fullName} guardados correctamente.`
-        });
+        if (user.groupPermissions && user.ticketPermissions) {
+            this.userService.updateUserPermissions(user.email, user.groupPermissions, user.ticketPermissions);
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Permisos actualizados',
+                detail: `Permisos de ${user.fullName} guardados correctamente.`
+            });
+        }
     }
 
     deleteUser(user: UserProfile) {
@@ -102,15 +109,20 @@ export class UserManagementComponent {
             fullName: '',
             email: '',
             password: 'User123!',
-            permisoBase: 'reader',
+            permisoBase: 'user',
             phone: '',
             address: '',
             birthDate: '',
-            permissions: {
+            groupPermissions: {
                 canAdd: false,
                 canEdit: false,
                 canDelete: false,
                 canComment: true
+            },
+            ticketPermissions: {
+                canAdd: false,
+                canEdit: false,
+                canDelete: false
             }
         };
         this.displayAddDialog = true;

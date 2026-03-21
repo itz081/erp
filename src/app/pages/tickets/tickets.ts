@@ -30,11 +30,11 @@ export class TicketsComponent {
     allTickets = computed(() => this.ticketService.tickets());
     canAdd = computed(() => {
         const user = this.userService.getCurrentUser()();
-        return user?.permisoBase === 'admin' || (user?.permissions?.canAdd ?? false);
+        return user?.permisoBase === 'admin' || (user?.ticketPermissions?.canAdd ?? user?.permissions?.canAdd ?? false);
     });
     canDelete = computed(() => {
         const user = this.userService.getCurrentUser()();
-        return user?.permisoBase === 'admin' || (user?.permissions?.canDelete ?? false);
+        return user?.permisoBase === 'admin' || (user?.ticketPermissions?.canDelete ?? user?.permissions?.canDelete ?? false);
     });
     isAdmin = computed(() => this.userService.getCurrentUser()()?.permisoBase === 'admin');
 

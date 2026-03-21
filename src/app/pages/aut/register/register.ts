@@ -142,7 +142,7 @@ export class RegisterPage {
                 address, 
                 birthDate, 
                 password,
-                permisoBase: 'reader', // Default permission
+                permisoBase: 'user', // Default permission
                 permissions: {
                     canAdd: false,
                     canEdit: false,

@@ -16,6 +16,11 @@ export class TicketService {
     constructor() {
         if (isPlatformBrowser(this.platformId)) {
             this.loadTickets();
+            window.addEventListener('storage', (event) => {
+                if (event.key === TICKETS_KEY) {
+                    this.loadTickets();
+                }
+            });
         }
     }
 

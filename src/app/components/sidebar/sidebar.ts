@@ -42,11 +42,6 @@ export class SidebarComponent implements OnInit {
         routerLink: ['/home/group'],
       },
       {
-        label: 'Tickets',
-        icon: 'pi pi-ticket',
-        routerLink: ['/home/tickets'],
-      },
-      {
         label: 'Perfil',
         icon: 'pi pi-user',
         routerLink: ['/home/user'],

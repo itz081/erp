@@ -41,15 +41,15 @@ export class TicketDetailComponent implements OnInit {
     ticket = computed(() => this.ticketService.getTicket(this.ticketId()));
     canEdit = computed(() => {
         const user = this.userService.getCurrentUser()();
-        return user?.permisoBase === 'admin' || (user?.permissions?.canEdit ?? false);
+        return user?.permisoBase === 'admin' || (user?.ticketPermissions?.canEdit ?? user?.permissions?.canEdit ?? false);
     });
     canDelete = computed(() => {
         const user = this.userService.getCurrentUser()();
-        return user?.permisoBase === 'admin' || (user?.permissions?.canDelete ?? false);
+        return user?.permisoBase === 'admin' || (user?.ticketPermissions?.canDelete ?? user?.permissions?.canDelete ?? false);
     });
     canComment = computed(() => {
         const user = this.userService.getCurrentUser()();
-        return user?.permisoBase === 'admin' || (user?.permissions?.canComment ?? false);
+        return user?.permisoBase === 'admin' || (user?.groupPermissions?.canComment ?? user?.permissions?.canComment ?? false);
     });
     isAdmin = computed(() => this.userService.getCurrentUser()()?.permisoBase === 'admin');
 

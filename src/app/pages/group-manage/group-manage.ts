@@ -43,12 +43,12 @@ export class GroupManageComponent implements OnInit {
 
     canAdd = computed(() => {
         const user = this.userService.getCurrentUser()();
-        return user?.permisoBase === 'admin' || (user?.permissions?.canAdd ?? false);
+        return user?.permisoBase === 'admin' || (user?.groupPermissions?.canAdd ?? user?.permissions?.canAdd ?? false);
     });
 
     canDelete = computed(() => {
         const user = this.userService.getCurrentUser()();
-        return user?.permisoBase === 'admin' || (user?.permissions?.canDelete ?? false);
+        return user?.permisoBase === 'admin' || (user?.groupPermissions?.canDelete ?? user?.permissions?.canDelete ?? false);
     });
 
     ngOnInit() {

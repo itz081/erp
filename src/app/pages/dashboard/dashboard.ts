@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { CardModule } from 'primeng/card';
@@ -27,7 +27,7 @@ export class DashboardComponent implements OnInit {
 
     canAdd = computed(() => {
         const user: any = this.userService.getCurrentUser()();
-        return user?.permisoBase === 'admin' || (user?.permissions?.canAdd ?? false);
+        return user?.permisoBase === 'admin' || (user?.ticketPermissions?.canAdd ?? user?.permissions?.canAdd ?? false);
     });
 
     chartData: any;
@@ -35,7 +35,14 @@ export class DashboardComponent implements OnInit {
 
     selectedGroup: any;
     groups = computed(() => {
-        const gs = this.groupService.groups();
+        const currentUser = this.userService.getCurrentUser()();
+        const isAdmin = currentUser?.permisoBase === 'admin';
+
+        let gs = this.groupService.groups();
+        if (!isAdmin) {
+            gs = gs.filter(g => g.miembros.some((m: any) => m.username === currentUser?.username));
+        }
+
         const ts = this.ticketService.tickets();
         return gs.map(g => ({
             ...g,
@@ -43,10 +50,23 @@ export class DashboardComponent implements OnInit {
         }));
     });
     
-    allTickets = computed(() => this.ticketService.tickets());
+    allTickets = computed(() => {
+        const user = this.userService.getCurrentUser()();
+        const isAdmin = user?.permisoBase === 'admin';
+        const ts = this.ticketService.tickets();
+        if (isAdmin) {
+            return ts;
+        }
+        return ts.filter(t => t.asignadoA === user?.username);
+    });
+
+    constructor() {
+        effect(() => {
+            this.updateChart();
+        });
+    }
 
     ngOnInit() {
-        this.updateChart();
     }
 
     updateChart() {

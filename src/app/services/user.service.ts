@@ -1,7 +1,20 @@
 import { Injectable, signal, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
-export type PermisoBase = 'admin' | 'reader';
+export type PermisoBase = 'admin' | 'user';
+
+export interface GroupPermissions {
+    canAdd: boolean;
+    canEdit: boolean;
+    canDelete: boolean;
+    canComment: boolean;
+}
+
+export interface TicketPermissions {
+    canAdd: boolean;
+    canEdit: boolean;
+    canDelete: boolean;
+}
 
 export interface UserPermissions {
     canAdd: boolean;
@@ -20,7 +33,9 @@ export interface UserProfile {
     password: string;
     groupIds?: number[];
     permisoBase: PermisoBase;
-    permissions: UserPermissions;
+    permissions?: UserPermissions;
+    groupPermissions?: GroupPermissions;
+    ticketPermissions?: TicketPermissions;
 }
 
 const USERS_KEY = 'registered_users_list';
@@ -47,9 +62,8 @@ export class UserService {
         if (raw) {
             const loadedUsers: any[] = JSON.parse(raw);
             
-            // Migration: Ensure all users have the permissions object
             const sanitizedUsers = loadedUsers.map(user => {
-                const permisoBase = user.permisoBase || user.role || 'reader';
+                const permisoBase = user.permisoBase || user.role || 'user';
                 const permissions = permisoBase === 'admin'
                     ? { canAdd: true, canEdit: true, canDelete: true, canComment: true }
                     : (user.permissions || {
@@ -58,14 +72,23 @@ export class UserService {
                         canDelete: false,
                         canComment: true
                     });
+
+                const groupPermissions = permisoBase === 'admin'
+                    ? { canAdd: true, canEdit: true, canDelete: true, canComment: true }
+                    : (user.groupPermissions || Object.assign({}, permissions));
+
+                const ticketPermissions = permisoBase === 'admin'
+                    ? { canAdd: true, canEdit: true, canDelete: true }
+                    : (user.ticketPermissions || { canAdd: permissions.canAdd, canEdit: permissions.canEdit, canDelete: permissions.canDelete });
                 
-                // Cleanup old property if exists
                 if (user.role) delete user.role;
                 
                 return {
                     ...user,
                     permisoBase,
-                    permissions
+                    permissions,
+                    groupPermissions,
+                    ticketPermissions
                 };
             });
             
@@ -85,7 +108,9 @@ export class UserService {
                     canEdit: true,
                     canDelete: true,
                     canComment: true
-                }
+                },
+                groupPermissions: { canAdd: true, canEdit: true, canDelete: true, canComment: true },
+                ticketPermissions: { canAdd: true, canEdit: true, canDelete: true }
             };
             this.usersSignal.set([admin]);
             this.saveUsers();
@@ -103,7 +128,7 @@ export class UserService {
         const raw = localStorage.getItem(CURRENT_USER_KEY);
         if (raw) {
             const user = JSON.parse(raw);
-            const permisoBase = user.permisoBase || user.role || 'reader';
+            const permisoBase = user.permisoBase || user.role || 'user';
             const permissions = permisoBase === 'admin'
                 ? { canAdd: true, canEdit: true, canDelete: true, canComment: true }
                 : (user.permissions || {
@@ -112,9 +137,18 @@ export class UserService {
                     canDelete: false,
                     canComment: true
                 });
+            
+            const groupPermissions = permisoBase === 'admin'
+                ? { canAdd: true, canEdit: true, canDelete: true, canComment: true }
+                : (user.groupPermissions || Object.assign({}, permissions));
+
+            const ticketPermissions = permisoBase === 'admin'
+                ? { canAdd: true, canEdit: true, canDelete: true }
+                : (user.ticketPermissions || { canAdd: permissions.canAdd, canEdit: permissions.canEdit, canDelete: permissions.canDelete });
+                
             if (user.role) delete user.role;
 
-            this.currentUserSignal.set({ ...user, permisoBase, permissions });
+            this.currentUserSignal.set({ ...user, permisoBase, permissions, groupPermissions, ticketPermissions });
         }
     }
 
@@ -142,7 +176,13 @@ export class UserService {
                 const permissions = permisoBase === 'admin' 
                     ? { canAdd: true, canEdit: true, canDelete: true, canComment: true }
                     : u.permissions;
-                return { ...u, permisoBase, permissions };
+                const groupPermissions = permisoBase === 'admin'
+                    ? { canAdd: true, canEdit: true, canDelete: true, canComment: true }
+                    : u.groupPermissions;
+                const ticketPermissions = permisoBase === 'admin'
+                    ? { canAdd: true, canEdit: true, canDelete: true }
+                    : u.ticketPermissions;
+                return { ...u, permisoBase, permissions, groupPermissions, ticketPermissions };
             }
             return u;
         }));
@@ -153,14 +193,20 @@ export class UserService {
             const permissions = permisoBase === 'admin' 
                 ? { canAdd: true, canEdit: true, canDelete: true, canComment: true }
                 : currentUser.permissions;
-            this.setCurrentUser({ ...currentUser, permisoBase, permissions });
+            const groupPermissions = permisoBase === 'admin'
+                ? { canAdd: true, canEdit: true, canDelete: true, canComment: true }
+                : currentUser.groupPermissions;
+            const ticketPermissions = permisoBase === 'admin'
+                ? { canAdd: true, canEdit: true, canDelete: true }
+                : currentUser.ticketPermissions;
+            this.setCurrentUser({ ...currentUser, permisoBase, permissions, groupPermissions, ticketPermissions });
         }
     }
 
-    updateUserPermissions(email: string, permissions: UserPermissions): void {
+    updateUserPermissions(email: string, groupPermissions: GroupPermissions, ticketPermissions: TicketPermissions): void {
         this.usersSignal.update(users => users.map(u => {
             if (u.email === email) {
-                return { ...u, permissions };
+                return { ...u, groupPermissions, ticketPermissions, permissions: u.permissions };
             }
             return u;
         }));
@@ -168,7 +214,7 @@ export class UserService {
         
         const currentUser = this.currentUserSignal();
         if (currentUser && currentUser.email === email) {
-            this.setCurrentUser({ ...currentUser, permissions });
+            this.setCurrentUser({ ...currentUser, groupPermissions, ticketPermissions });
         }
     }
 

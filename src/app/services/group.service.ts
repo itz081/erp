@@ -120,7 +120,6 @@ export class GroupService {
     addTicketToGroup(groupId: number, ticket: any) {
         this.groupsSignal.update(gs => gs.map(g => {
             if (g.id === groupId) {
-                // Clona el ticket para no mutar el modelo
                 return { ...g, tickets: [...g.tickets, ticket] };
             }
             return g;
