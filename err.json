@@ -1,0 +1,1 @@
+{"statusCode":500,"code":"42703","error":"Internal Server Error","message":"no existe la columna «password_hash» en la relación «usuarios»"}

@@ -1,0 +1,21 @@
+{
+  "name": "ana-seguridad-backend",
+  "version": "1.0.0",
+  "description": "ERP Tickets Seguridad - Backend Microservicios",
+  "private": true,
+  "workspaces": [
+    "apigateway",
+    "users",
+    "tickets",
+    "groups"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=users\" \"npm run dev --workspace=tickets\" \"npm run dev --workspace=groups\" \"npm run dev --workspace=apigateway\"",
+    "start": "concurrently \"npm run start --workspace=users\" \"npm run start --workspace=tickets\" \"npm run start --workspace=groups\" \"npm run start --workspace=apigateway\"",
+    "install:all": "npm install && npm install --workspace=users && npm install --workspace=tickets && npm install --workspace=groups && npm install --workspace=apigateway",
+    "db:setup": "node scripts/db-setup.js"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

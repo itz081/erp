@@ -131,33 +131,27 @@ export class RegisterPage {
         }
 
         this.loading.set(true);
-        setTimeout(() => {
-            // Guardar perfil en el servicio (localStorage)
-            const { username, fullName, email, phone, address, birthDate, password } = this.registerForm.value;
-            this.userService.saveProfile({ 
-                username, 
-                fullName, 
-                email, 
-                phone, 
-                address, 
-                birthDate, 
-                password,
-                permisoBase: 'user', // Default permission
-                permissions: {
-                    canAdd: false,
-                    canEdit: false,
-                    canDelete: false,
-                    canComment: false
-                }
-            });
-
-            this.loading.set(false);
-            this.messageService.add({
-                severity: 'success',
-                summary: 'Registro Exitoso',
-                detail: 'Cuenta creada correctamente.',
-            });
-            setTimeout(() => this.router.navigate(['/']), 1500);
-        }, 1500);
+        const { username, fullName, email, phone, address, birthDate, password } = this.registerForm.value;
+        const profile = { username, fullName, email, phone, address, birthDate, password, permisoBase: 'user' as const };
+        
+        this.userService.register(profile).subscribe({
+            next: () => {
+                this.loading.set(false);
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Registro Exitoso',
+                    detail: 'Cuenta creada correctamente. Ahora puede iniciar sesión.',
+                });
+                setTimeout(() => this.router.navigate(['/']), 1500);
+            },
+            error: (err) => {
+                this.loading.set(false);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error en el Registro',
+                    detail: err.error?.error || 'El usuario ya existe o hubo un error.',
+                });
+            }
+        });
     }
 }

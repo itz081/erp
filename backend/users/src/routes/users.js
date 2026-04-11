@@ -1,0 +1,158 @@
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import pool from '../db.js';
+import { reply, replyError } from '../response.js';
+
+async function verifyToken(request, res) {
+  const auth = request.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer ')) {
+    res.code(401).send(replyError(401, 'SxUS401', 'Token requerido'));
+    return;
+  }
+  try {
+    request.jwtUser = jwt.verify(
+      auth.split(' ')[1],
+      process.env.JWT_SECRET || 'ana_secret'
+    );
+  } catch {
+    res.code(401).send(replyError(401, 'SxUS401', 'Token inválido'));
+  }
+}
+
+export default async function usersRoutes(fastify) {
+  fastify.get('/', { preHandler: verifyToken }, async (request, res) => {
+    const { rows } = await pool.query(
+      `SELECT id, nombre_completo, username, email, permisos_globales, 
+              direccion, telefono, fecha_inicio, last_login, creado_en
+       FROM usuarios ORDER BY nombre_completo`
+    );
+    return reply(200, 'SxUS200', { users: rows });
+  });
+
+  fastify.get('/:id', { preHandler: verifyToken }, async (request, res) => {
+    const { id } = request.params;
+    const { rows } = await pool.query(
+      `SELECT u.id, u.nombre_completo, u.username, u.email, u.permisos_globales,
+              u.direccion, u.telefono, u.fecha_inicio, u.last_login, u.creado_en
+       FROM usuarios u WHERE u.id = $1`,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      res.code(404);
+      return replyError(404, 'SxUS404', 'Usuario no encontrado');
+    }
+
+    const user = rows[0];
+    const permsData = await pool.query(
+      `SELECT p.id, p.nombre FROM permisos p WHERE p.id = ANY($1::uuid[])`,
+      [user.permisos_globales || []]
+    );
+    user.permisos = permsData.rows;
+
+    const groups = await pool.query(
+      `SELECT g.id, g.nombre, g.descripcion FROM grupos g
+       INNER JOIN grupo_miembros gm ON gm.grupo_id = g.id
+       WHERE gm.usuario_id = $1`,
+      [id]
+    );
+    user.grupos = groups.rows;
+
+    return reply(200, 'SxUS200', { user });
+  });
+
+  fastify.put('/:id', { preHandler: verifyToken }, async (request, res) => {
+    const { id } = request.params;
+    const { nombre_completo, direccion, telefono } = request.body;
+
+    if (request.jwtUser.sub !== id) {
+      const callerPerms = request.jwtUser.permisos || [];
+      if (!callerPerms.includes('users:manage')) {
+        res.code(403);
+        return replyError(403, 'SxUS403', 'Sin permiso para editar este usuario');
+      }
+    }
+
+    const { rows } = await pool.query(
+      `UPDATE usuarios SET
+         nombre_completo = COALESCE($1, nombre_completo),
+         direccion = COALESCE($2, direccion),
+         telefono = COALESCE($3, telefono)
+       WHERE id = $4
+       RETURNING id, nombre_completo, username, email, direccion, telefono`,
+      [nombre_completo || null, direccion || null, telefono || null, id]
+    );
+
+    if (rows.length === 0) {
+      res.code(404);
+      return replyError(404, 'SxUS404', 'Usuario no encontrado');
+    }
+
+    return reply(200, 'SxUS200', { user: rows[0] });
+  });
+
+  fastify.put('/:id/permisos', { preHandler: verifyToken }, async (request, res) => {
+    const { id } = request.params;
+    const { permisos_globales } = request.body;
+
+    const callerPerms = request.jwtUser.permisos || [];
+    if (!callerPerms.includes('users:manage')) {
+      res.code(403);
+      return replyError(403, 'SxUS403', 'Sin permiso para gestionar permisos');
+    }
+
+    await pool.query(
+      'UPDATE usuarios SET permisos_globales = $1 WHERE id = $2',
+      [permisos_globales, id]
+    );
+
+    return reply(200, 'SxUS200', { message: 'Permisos actualizados' });
+  });
+
+  fastify.put('/:id/password', { preHandler: verifyToken }, async (request, res) => {
+    const { id } = request.params;
+    const { current_password, new_password } = request.body;
+
+    if (request.jwtUser.sub !== id) {
+      res.code(403);
+      return replyError(403, 'SxUS403', 'Solo puedes cambiar tu propia contraseña');
+    }
+
+    const { rows } = await pool.query(
+      'SELECT password_hash FROM usuarios WHERE id = $1',
+      [id]
+    );
+    if (rows.length === 0) {
+      res.code(404);
+      return replyError(404, 'SxUS404', 'Usuario no encontrado');
+    }
+
+    const valid = await bcrypt.compare(current_password, rows[0].password_hash);
+    if (!valid) {
+      res.code(400);
+      return replyError(400, 'SxUS400', 'Contraseña actual incorrecta');
+    }
+
+    const password_hash = await bcrypt.hash(new_password, 10);
+    await pool.query('UPDATE usuarios SET password_hash = $1 WHERE id = $2', [password_hash, id]);
+
+    return reply(200, 'SxUS200', { message: 'Contraseña actualizada' });
+  });
+
+  fastify.delete('/:id', { preHandler: verifyToken }, async (request, res) => {
+    const { id } = request.params;
+    const callerPerms = request.jwtUser.permisos || [];
+    if (!callerPerms.includes('users:manage')) {
+      res.code(403);
+      return replyError(403, 'SxUS403', 'Sin permiso para eliminar usuarios');
+    }
+
+    const { rowCount } = await pool.query('DELETE FROM usuarios WHERE id = $1', [id]);
+    if (rowCount === 0) {
+      res.code(404);
+      return replyError(404, 'SxUS404', 'Usuario no encontrado');
+    }
+
+    return reply(200, 'SxUS200', { message: 'Usuario eliminado' });
+  });
+}

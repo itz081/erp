@@ -84,7 +84,7 @@ export class TicketDetailComponent implements OnInit {
                 descripcion: [t.descripcion, [Validators.required, Validators.minLength(10)]],
                 estado: [t.estado, Validators.required],
                 prioridad: [t.prioridad, Validators.required],
-                asignadoA: [this.groupMembers().find(m => m.username === t.asignadoA) || t.asignadoA, Validators.required],
+                asignadoA: [this.groupMembers().find((m: any) => m.username === t.asignadoA) || t.asignadoA, Validators.required],
                 fechaLimite: [t.fechaLimite ? new Date(t.fechaLimite) : null, Validators.required]
             });
             this.ticketForm.disable();

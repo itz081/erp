@@ -1,0 +1,202 @@
+import jwt from 'jsonwebtoken';
+import pool from '../db.js';
+import { reply, replyError } from '../response.js';
+
+async function verifyToken(request, res) {
+  const auth = request.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer ')) {
+    res.code(401).send(replyError(401, 'SxTK401', 'Token requerido'));
+    return;
+  }
+  try {
+    request.jwtUser = jwt.verify(
+      auth.split(' ')[1],
+      process.env.JWT_SECRET || 'ana_secret'
+    );
+  } catch {
+    res.code(401).send(replyError(401, 'SxTK401', 'Token inválido'));
+  }
+}
+
+async function logHistory(ticketId, usuarioId, accion, detalles) {
+  await pool.query(
+    `INSERT INTO historial_tickets (ticket_id, usuario_id, accion, detalles) VALUES ($1, $2, $3, $4)`,
+    [ticketId, usuarioId, accion, JSON.stringify(detalles)]
+  );
+}
+
+export default async function ticketsRoutes(fastify) {
+  fastify.get('/', { preHandler: verifyToken }, async (request) => {
+    const { grupo_id, estado_id, prioridad_id, asignado_id } = request.query;
+
+    let whereClause = 'WHERE 1=1';
+    const params = [];
+    let idx = 1;
+
+    if (grupo_id) { whereClause += ` AND t.grupo_id = $${idx++}`; params.push(grupo_id); }
+    if (estado_id) { whereClause += ` AND t.estado_id = $${idx++}`; params.push(estado_id); }
+    if (prioridad_id) { whereClause += ` AND t.prioridad_id = $${idx++}`; params.push(prioridad_id); }
+    if (asignado_id) { whereClause += ` AND t.asignado_id = $${idx++}`; params.push(asignado_id); }
+
+    const { rows } = await pool.query(
+      `SELECT t.id, t.titulo, t.descripcion, t.grupo_id, t.autor_id, t.asignado_id,
+              t.estado_id, t.prioridad_id, t.creado_en, t.fecha_final,
+              e.nombre AS estado_nombre, e.color AS estado_color,
+              p.nombre AS prioridad_nombre, p.orden AS prioridad_orden,
+              ua.nombre_completo AS autor_nombre,
+              uasig.nombre_completo AS asignado_nombre
+       FROM tickets t
+       LEFT JOIN estados e ON e.id = t.estado_id
+       LEFT JOIN prioridades p ON p.id = t.prioridad_id
+       LEFT JOIN usuarios ua ON ua.id = t.autor_id
+       LEFT JOIN usuarios uasig ON uasig.id = t.asignado_id
+       ${whereClause}
+       ORDER BY p.orden ASC, t.creado_en DESC`,
+      params
+    );
+
+    return reply(200, 'SxTK200', { tickets: rows });
+  });
+
+  fastify.get('/:id', { preHandler: verifyToken }, async (request, res) => {
+    const { id } = request.params;
+
+    const { rows } = await pool.query(
+      `SELECT t.id, t.titulo, t.descripcion, t.grupo_id, t.autor_id, t.asignado_id,
+              t.estado_id, t.prioridad_id, t.creado_en, t.fecha_final,
+              e.nombre AS estado_nombre, e.color AS estado_color,
+              p.nombre AS prioridad_nombre,
+              ua.nombre_completo AS autor_nombre,
+              uasig.nombre_completo AS asignado_nombre
+       FROM tickets t
+       LEFT JOIN estados e ON e.id = t.estado_id
+       LEFT JOIN prioridades p ON p.id = t.prioridad_id
+       LEFT JOIN usuarios ua ON ua.id = t.autor_id
+       LEFT JOIN usuarios uasig ON uasig.id = t.asignado_id
+       WHERE t.id = $1`,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      res.code(404);
+      return replyError(404, 'SxTK404', 'Ticket no encontrado');
+    }
+
+    const ticket = rows[0];
+
+    const comentarios = await pool.query(
+      `SELECT c.id, c.contenido, c.creado_en, u.nombre_completo AS autor_nombre, u.username AS autor_username
+       FROM comentarios c
+       LEFT JOIN usuarios u ON u.id = c.autor_id
+       WHERE c.ticket_id = $1 ORDER BY c.creado_en ASC`,
+      [id]
+    );
+
+    const historial = await pool.query(
+      `SELECT h.id, h.accion, h.detalles, h.creado_en, u.nombre_completo AS usuario_nombre
+       FROM historial_tickets h
+       LEFT JOIN usuarios u ON u.id = h.usuario_id
+       WHERE h.ticket_id = $1 ORDER BY h.creado_en ASC`,
+      [id]
+    );
+
+    ticket.comentarios = comentarios.rows;
+    ticket.historial = historial.rows;
+
+    return reply(200, 'SxTK200', { ticket });
+  });
+
+  fastify.post('/', { preHandler: verifyToken }, async (request, res) => {
+    const { titulo, descripcion, grupo_id, asignado_id, estado_id, prioridad_id, fecha_final } = request.body;
+    const autor_id = request.jwtUser.sub;
+
+    const permisos = request.jwtUser.permisos || [];
+    if (!permisos.includes('tickets:add')) {
+      res.code(403);
+      return replyError(403, 'SxTK403', 'Sin permiso para crear tickets');
+    }
+
+    if (!titulo || !grupo_id || !estado_id || !prioridad_id) {
+      res.code(400);
+      return replyError(400, 'SxTK400', 'Faltan campos obligatorios');
+    }
+
+    const { rows } = await pool.query(
+      `INSERT INTO tickets (titulo, descripcion, grupo_id, autor_id, asignado_id, estado_id, prioridad_id, fecha_final)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [titulo, descripcion || null, grupo_id, autor_id, asignado_id || null, estado_id, prioridad_id, fecha_final || null]
+    );
+
+    const ticket = rows[0];
+    await logHistory(ticket.id, autor_id, 'Ticket creado', { titulo });
+
+    res.code(201);
+    return reply(201, 'SxTK201', { ticket });
+  });
+
+  fastify.put('/:id', { preHandler: verifyToken }, async (request, res) => {
+    const { id } = request.params;
+    const { titulo, descripcion, asignado_id, estado_id, prioridad_id, fecha_final } = request.body;
+    const userId = request.jwtUser.sub;
+    const permisos = request.jwtUser.permisos || [];
+
+    const existing = await pool.query('SELECT * FROM tickets WHERE id = $1', [id]);
+    if (existing.rowCount === 0) {
+      res.code(404);
+      return replyError(404, 'SxTK404', 'Ticket no encontrado');
+    }
+
+    const ticket = existing.rows[0];
+    const isAuthor = ticket.autor_id === userId;
+    const isAssigned = ticket.asignado_id === userId;
+    const canEdit = permisos.includes('tickets:edit');
+    const canMove = permisos.includes('tickets:move');
+
+    if (estado_id && estado_id !== ticket.estado_id) {
+      if (!canMove || !isAssigned) {
+        res.code(403);
+        return replyError(403, 'SxTK403', 'Sin permiso para mover ticket o no estás asignado');
+      }
+    }
+
+    if ((titulo || descripcion || asignado_id || prioridad_id || fecha_final) && !canEdit) {
+      res.code(403);
+      return replyError(403, 'SxTK403', 'Sin permiso para editar tickets');
+    }
+
+    const { rows } = await pool.query(
+      `UPDATE tickets SET
+         titulo = COALESCE($1, titulo),
+         descripcion = COALESCE($2, descripcion),
+         asignado_id = COALESCE($3, asignado_id),
+         estado_id = COALESCE($4, estado_id),
+         prioridad_id = COALESCE($5, prioridad_id),
+         fecha_final = COALESCE($6, fecha_final)
+       WHERE id = $7 RETURNING *`,
+      [titulo || null, descripcion || null, asignado_id || null, estado_id || null, prioridad_id || null, fecha_final || null, id]
+    );
+
+    await logHistory(id, userId, 'Ticket actualizado', { cambios: request.body });
+
+    return reply(200, 'SxTK200', { ticket: rows[0] });
+  });
+
+  fastify.delete('/:id', { preHandler: verifyToken }, async (request, res) => {
+    const { id } = request.params;
+    const permisos = request.jwtUser.permisos || [];
+
+    if (!permisos.includes('tickets:delete')) {
+      res.code(403);
+      return replyError(403, 'SxTK403', 'Sin permiso para eliminar tickets');
+    }
+
+    const { rowCount } = await pool.query('DELETE FROM tickets WHERE id = $1', [id]);
+    if (rowCount === 0) {
+      res.code(404);
+      return replyError(404, 'SxTK404', 'Ticket no encontrado');
+    }
+
+    return reply(200, 'SxTK200', { message: 'Ticket eliminado' });
+  });
+}

@@ -59,28 +59,35 @@ export class LoginPage {
         const { email, password } = this.loginForm.value;
         this.loading.set(true);
 
-        setTimeout(() => {
-            const user = this.userService.validateCredentials(email, password);
-
-            if (user) {
-                this.userService.setCurrentUser(user);
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Bienvenido',
-                    detail: `Hola, ${user.fullName}!`,
-                });
-                setTimeout(() => {
+        this.userService.login(email, password).subscribe({
+            next: (user) => {
+                if (user) {
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Bienvenido',
+                        detail: `Hola, ${user.fullName}!`,
+                    });
+                    setTimeout(() => {
+                        this.loading.set(false);
+                        this.router.navigate(['/home']);
+                    }, 500);
+                } else {
                     this.loading.set(false);
-                    this.router.navigate(['/home']);
-                }, 1000);
-            } else {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error de acceso',
+                        detail: 'Credenciales incorrectas.',
+                    });
+                }
+            },
+            error: () => {
                 this.loading.set(false);
                 this.messageService.add({
                     severity: 'error',
-                    summary: 'Error de acceso',
-                    detail: 'Credenciales incorrectas.',
+                    summary: 'Error',
+                    detail: 'No se pudo conectar al servidor.',
                 });
             }
-        }, 1000);
+        });
     }
 }

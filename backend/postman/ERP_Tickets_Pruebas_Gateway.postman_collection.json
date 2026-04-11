@@ -1,0 +1,639 @@
+{
+  "info": {
+    "name": "ERP Tickets - Pruebas Gateway",
+    "description": "Colección completa para validar que todos los microservicios (user, tickets, groups) están correctamente conectados y funcionando a través del API Gateway.\n\n## Instrucciones\n1. Importar esta colección en Postman\n2. Seleccionar el entorno `ERP Tickets - Local`\n3. Ejecutar carpeta por carpeta en orden\n4. Todos los requests pasan por el Gateway en puerto 3000\n\n## Variables de colección\n- `baseUrl` = http://localhost:3000",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Gateway Global",
+      "description": "Endpoints del API Gateway. No requieren JWT.",
+      "item": [
+        {
+          "name": "Health del Gateway",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health",
+            "description": "Verifica que el API Gateway está corriendo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Service es apigateway', () => {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.data.service).to.eql('apigateway');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/health",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/health",
+            "description": "Health check con formato de respuesta universal (intOpCode: TEST200)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('intOpCode es TEST200', () => {",
+                  "  pm.expect(pm.response.json().intOpCode).to.eql('TEST200');",
+                  "});",
+                  "pm.test('Tiene timestamp', () => {",
+                  "  pm.expect(pm.response.json().data.timestamp).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/gateway/status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/gateway/status",
+            "description": "Muestra el estado de los 3 microservicios con latencia. No requiere JWT."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('intOpCode es TEST200', () => {",
+                  "  pm.expect(pm.response.json().intOpCode).to.eql('TEST200');",
+                  "});",
+                  "pm.test('Gateway está up', () => {",
+                  "  pm.expect(pm.response.json().data.gateway).to.eql('up');",
+                  "});",
+                  "pm.test('Contiene 3 servicios', () => {",
+                  "  const services = pm.response.json().data.services;",
+                  "  pm.expect(services).to.be.an('array').with.lengthOf(3);",
+                  "});",
+                  "pm.test('Todos los servicios up', () => {",
+                  "  const services = pm.response.json().data.services;",
+                  "  services.forEach(s => pm.expect(s.status).to.eql('up'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Auth (vía Gateway)",
+      "description": "Pruebas de registro e inicio de sesión. Guardan el token automáticamente.",
+      "item": [
+        {
+          "name": "POST /api/auth/register",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/register",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre_completo\": \"Usuario Prueba\",\n  \"username\": \"testuser\",\n  \"email\": \"testuser@erp.com\",\n  \"password\": \"Test1234!\",\n  \"telefono\": \"5551234567\",\n  \"direccion\": \"Calle de Prueba 123\"\n}"
+            },
+            "description": "Registra un nuevo usuario. Si ya existe devuelve 409."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const code = pm.response.code;",
+                  "pm.test('201 o 409', () => pm.expect([201, 409]).to.include(code));",
+                  "if (code === 201) {",
+                  "  pm.test('Tiene user en data', () => {",
+                  "    pm.expect(pm.response.json().data.user).to.be.an('object');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/auth/login",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"testuser@erp.com\",\n  \"password\": \"Test1234!\"\n}"
+            },
+            "description": "Login con email y contraseña. Guarda el token en variable de colección."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Tiene token', () => {",
+                  "  const token = pm.response.json().data.token;",
+                  "  pm.expect(token).to.be.a('string').and.not.empty;",
+                  "  pm.collectionVariables.set('token', token);",
+                  "});",
+                  "pm.test('Tiene user', () => {",
+                  "  pm.expect(pm.response.json().data.user).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/auth/me",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auth/me",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "description": "Devuelve el usuario autenticado. Requiere el token del login."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Tiene email', () => {",
+                  "  pm.expect(pm.response.json().data.user.email).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Microservicio USER",
+      "description": "Tests de conectividad del microservicio de usuarios (puerto 3001). Sin JWT.",
+      "item": [
+        {
+          "name": "GET /api/user/test/ping",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/user/test/ping",
+            "description": "Ping básico al microservicio de usuarios."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('intOpCode TEST200', () => pm.expect(pm.response.json().intOpCode).to.eql('TEST200'));",
+                  "pm.test('Service es users', () => pm.expect(pm.response.json().data.service).to.eql('users'));",
+                  "pm.test('Mensaje pong', () => pm.expect(pm.response.json().data.message).to.eql('pong'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/user/test/db",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/user/test/db",
+            "description": "Verifica que el microservicio de usuarios tiene conexión a PostgreSQL."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('DB conectada', () => pm.expect(pm.response.json().data.db_connected).to.be.true);",
+                  "pm.test('Tiene server_time', () => pm.expect(pm.response.json().data.server_time).to.be.a('string'));",
+                  "pm.test('DB es ana', () => pm.expect(pm.response.json().data.db_name.toLowerCase()).to.eql('ana'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/user/test/tables",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/user/test/tables",
+            "description": "Lista las tablas de la BD vistas desde el microservicio de usuarios."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Al menos 10 tablas', () => {",
+                  "  pm.expect(pm.response.json().data.total_tables).to.be.gte(10);",
+                  "});",
+                  "pm.test('Tabla usuarios existe', () => {",
+                  "  const names = pm.response.json().data.tables.map(t => t.table_name);",
+                  "  pm.expect(names).to.include('usuarios');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/user/test/counts",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/user/test/counts",
+            "description": "Cuenta usuarios y permisos en la BD."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Al menos 7 permisos seed', () => {",
+                  "  pm.expect(pm.response.json().data.counts.permisos).to.be.gte(7);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Microservicio TICKETS",
+      "description": "Tests de conectividad del microservicio de tickets (puerto 3002). Sin JWT.",
+      "item": [
+        {
+          "name": "GET /api/tickets/test/ping",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tickets/test/ping",
+            "description": "Ping básico al microservicio de tickets."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('intOpCode TEST200', () => pm.expect(pm.response.json().intOpCode).to.eql('TEST200'));",
+                  "pm.test('Service es tickets', () => pm.expect(pm.response.json().data.service).to.eql('tickets'));",
+                  "pm.test('Mensaje pong', () => pm.expect(pm.response.json().data.message).to.eql('pong'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/tickets/test/db",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tickets/test/db",
+            "description": "Verifica conexión a PostgreSQL desde tickets service."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('DB conectada', () => pm.expect(pm.response.json().data.db_connected).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/tickets/test/tables",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tickets/test/tables",
+            "description": "Lista tablas vistas desde el microservicio de tickets."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Tabla tickets existe', () => {",
+                  "  const names = pm.response.json().data.tables.map(t => t.table_name);",
+                  "  pm.expect(names).to.include('tickets');",
+                  "  pm.expect(names).to.include('comentarios');",
+                  "  pm.expect(names).to.include('historial_tickets');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/tickets/test/counts",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tickets/test/counts",
+            "description": "Cuenta tickets, estados, prioridades y comentarios."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('5 estados seed', () => pm.expect(pm.response.json().data.counts.estados).to.eql(5));",
+                  "pm.test('4 prioridades seed', () => pm.expect(pm.response.json().data.counts.prioridades).to.eql(4));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/tickets/catalogs/estados",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tickets/catalogs/estados",
+            "description": "Catálogo de estados (público, sin JWT)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Al menos 5 estados', () => {",
+                  "  pm.expect(pm.response.json().data.estados.length).to.be.gte(5);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/tickets/catalogs/prioridades",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tickets/catalogs/prioridades",
+            "description": "Catálogo de prioridades (público, sin JWT)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('4 prioridades', () => {",
+                  "  pm.expect(pm.response.json().data.prioridades.length).to.eql(4);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Microservicio GROUPS",
+      "description": "Tests de conectividad del microservicio de grupos (puerto 3003). Sin JWT.",
+      "item": [
+        {
+          "name": "GET /api/groups/test/ping",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/groups/test/ping",
+            "description": "Ping básico al microservicio de grupos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('intOpCode TEST200', () => pm.expect(pm.response.json().intOpCode).to.eql('TEST200'));",
+                  "pm.test('Service es groups', () => pm.expect(pm.response.json().data.service).to.eql('groups'));",
+                  "pm.test('Mensaje pong', () => pm.expect(pm.response.json().data.message).to.eql('pong'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/groups/test/db",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/groups/test/db",
+            "description": "Verifica conexión a PostgreSQL desde groups service."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('DB conectada', () => pm.expect(pm.response.json().data.db_connected).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/groups/test/tables",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/groups/test/tables",
+            "description": "Lista tablas vistas desde el microservicio de grupos."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Tabla grupos existe', () => {",
+                  "  const names = pm.response.json().data.tables.map(t => t.table_name);",
+                  "  pm.expect(names).to.include('grupos');",
+                  "  pm.expect(names).to.include('grupo_miembros');",
+                  "  pm.expect(names).to.include('grupo_usuario_permisos');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/groups/test/counts",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/groups/test/counts",
+            "description": "Cuenta grupos y miembros en la BD."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Tiene counts', () => {",
+                  "  pm.expect(pm.response.json().data.counts.grupos).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - Endpoints Protegidos (con JWT)",
+      "description": "Valida que los endpoints de negocio funcionan con el token obtenido en el login.",
+      "item": [
+        {
+          "name": "GET /api/users (lista usuarios)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "description": "Lista todos los usuarios. Requiere JWT."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Contiene users array', () => {",
+                  "  pm.expect(pm.response.json().data.users).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/groups (mis grupos)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/groups",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "description": "Lista grupos del usuario autenticado. Requiere JWT."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Contiene grupos array', () => {",
+                  "  pm.expect(pm.response.json().data.grupos).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/tickets",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tickets",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "description": "Lista todos los tickets. Requiere JWT."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Contiene tickets array', () => {",
+                  "  pm.expect(pm.response.json().data.tickets).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/permissions",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/permissions",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "description": "Lista los 7 permisos del sistema. Requiere JWT."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Al menos 7 permisos', () => {",
+                  "  pm.expect(pm.response.json().data.permisos.length).to.be.gte(7);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sin Token → 401",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users",
+            "description": "Demuestra que sin JWT se obtiene 401."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('intOpCode SxGW401', () => {",
+                  "  pm.expect(pm.response.json().intOpCode).to.eql('SxGW401');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
