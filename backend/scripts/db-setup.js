@@ -22,12 +22,7 @@ const DB_CONFIG = {
 };
 
 const SCHEMA_SQL = `
-DROP SCHEMA public CASCADE;
-CREATE SCHEMA public;
-GRANT ALL ON SCHEMA public TO postgres;
-GRANT ALL ON SCHEMA public TO public;
-
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE IF NOT EXISTS permisos (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -118,39 +113,43 @@ INSERT INTO permisos (nombre, descripcion) VALUES
   ('tickets:add', 'Crear nuevos tickets'),
   ('tickets:edit', 'Editar tickets existentes'),
   ('tickets:delete', 'Eliminar tickets'),
-  ('tickets:move', 'Cambiar estado de tickets'),
   ('tickets:comment', 'Comentar en tickets'),
-  ('groups:manage', 'Administrar grupos'),
+  ('groups:add', 'Crear nuevos grupos'),
+  ('groups:edit', 'Editar grupos'),
+  ('groups:delete', 'Eliminar grupos'),
+  ('groups:member-add', 'Añadir miembros a grupos'),
+  ('groups:member-delete', 'Eliminar miembros de grupos'),
   ('users:manage', 'Administrar usuarios')
 ON CONFLICT (nombre) DO NOTHING;
 
 INSERT INTO estados (nombre, color) VALUES
-  ('Pendiente', '#F59E0B'),
-  ('En Progreso', '#3B82F6'),
-  ('En Revisión', '#8B5CF6'),
-  ('Completado', '#10B981'),
-  ('Cancelado', '#EF4444')
+  ('PENDIENTE', '#F59E0B'),
+  ('EN CURSO', '#3B82F6'),
+  ('REVISION', '#8B5CF6'),
+  ('TERMINADO', '#10B981')
 ON CONFLICT (nombre) DO NOTHING;
 
 INSERT INTO prioridades (nombre, orden) VALUES
-  ('Crítica', 1),
-  ('Alta', 2),
-  ('Media', 3),
-  ('Baja', 4)
+  ('ALTA', 1),
+  ('MEDIA', 2),
+  ('BAJA', 3)
 ON CONFLICT (nombre) DO NOTHING;
 
 INSERT INTO usuarios (nombre_completo, username, email, password_hash)
--- El hash corresponde a "Admin123!" pre-generado mediante bcrypt (10 rounds)
-SELECT 'Administrador', 'admin', 'admin@admin.com', '$2b$10$VCl9OUZLbPJ8eXoZnQd28u5NS5yDuuOsVKIOTA8RDCei5wSZp55d6'
+-- El hash corresponde a "Admin123!"
+SELECT 'Administrador', 'admin', 'admin@admin.com', '$2b$10$SuIWbTJoxjeDapRbxNdQOu5bcIfsJxJaENeAt9hDu0QazRYxwBhdi'
 WHERE NOT EXISTS (SELECT 1 FROM usuarios WHERE email = 'admin@admin.com');
 
--- Asignar todos los permisos al admin maestro (por nombre)
-UPDATE usuarios SET permisos_globales = ARRAY(SELECT id FROM permisos) WHERE username = 'admin';
+-- Forzar permisos completos al admin aunque ya exista
+UPDATE usuarios SET 
+    password_hash = '$2b$10$SuIWbTJoxjeDapRbxNdQOu5bcIfsJxJaENeAt9hDu0QazRYxwBhdi',
+    permisos_globales = ARRAY(SELECT id FROM permisos) 
+WHERE username = 'admin' OR email = 'admin@admin.com';
 
 `;
 
 async function run() {
-  process.stdout.write('🔧 Configurando base de datos ANA...\n');
+  process.stdout.write('🔧 Configurando base de datos ana...\n');
 
   const adminClient = new Client({ ...DB_CONFIG, database: 'postgres' });
   await adminClient.connect();

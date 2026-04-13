@@ -5,109 +5,152 @@ import { CardModule } from 'primeng/card';
 import { TableModule } from 'primeng/table';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ButtonModule } from 'primeng/button';
-import { ToggleButtonModule } from 'primeng/togglebutton';
 import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
-import { DragDropModule } from 'primeng/dragdrop';
+import { TooltipModule } from 'primeng/tooltip';
+import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { DragDropModule } from 'primeng/dragdrop';
+
 import { TicketService } from '../../services/ticket.service';
 import { GroupService } from '../../services/group.service';
 import { UserService } from '../../services/user.service';
 import { Ticket } from '../../models/ticket.model';
 
 @Component({
-    selector: 'app-group-view',
-    standalone: true,
-    imports: [CommonModule, CardModule, TableModule, ToolbarModule, ButtonModule, ToggleButtonModule, DialogModule, FormsModule, DragDropModule, ToastModule],
-    providers: [MessageService],
-    templateUrl: './group-view.html',
-    styles: []
+  selector: 'app-group-view',
+  standalone: true,
+  imports: [
+    CommonModule, 
+    CardModule, 
+    TableModule, 
+    ToolbarModule, 
+    ButtonModule, 
+    DialogModule, 
+    FormsModule, 
+    TooltipModule,
+    TagModule,
+    ToastModule,
+    DragDropModule
+  ],
+  providers: [MessageService],
+  templateUrl: './group-view.html',
+  styleUrl: './group-view.css'
 })
 export class GroupViewComponent implements OnInit {
-    ticketService = inject(TicketService);
-    groupService = inject(GroupService);
-    route = inject(ActivatedRoute);
-    router = inject(Router);
+  ticketService = inject(TicketService);
+  groupService = inject(GroupService);
+  userService = inject(UserService);
+  messageService = inject(MessageService);
+  route = inject(ActivatedRoute);
+  router = inject(Router);
 
-    groupId = signal<number>(0);
-    isKanban = false;
+  groupId = signal<string>('');
+  isKanban = false;
+  draggedTicket: any = null;
 
-    groupTickets = computed(() => this.ticketService.getTicketsByGroup(this.groupId()));
-    group = computed(() => this.groupService.getGroup(this.groupId()));
+  groupTickets = computed(() => this.ticketService.getTicketsByGroup(this.groupId()));
+  group = computed(() => this.groupService.getGroup(this.groupId()));
+  
+  // Catálogos reactivos
+  estados = this.ticketService.estados;
 
-    statuses = ['Pendiente', 'En progreso', 'Revision', 'Finalizado'];
+  previewTicket: Ticket | null = null;
+  displayPreview = false;
 
-    previewTicket: Ticket | null = null;
-    displayPreview = false;
+  ngOnInit() {
+    this.route.params.subscribe(params => {
+      const id = params['id'];
+      this.groupId.set(id);
+      this.groupService.loadGroupById(id).subscribe();
+      this.ticketService.loadTickets().subscribe();
+      this.ticketService.loadCatalogs().subscribe();
+    });
+  }
 
-    ngOnInit() {
-        this.route.params.subscribe(params => {
-            this.groupId.set(Number(params['id']));
-        });
+  getTicketsByStatus(statusId: string) {
+    return this.groupTickets().filter(t => t.estadoId === statusId);
+  }
+
+  openPreview(ticket: Ticket) {
+    this.previewTicket = ticket;
+    this.displayPreview = true;
+  }
+
+  viewFullDetail(id: string | number) {
+    this.router.navigate(['/home/tickets', id]);
+  }
+
+  canManageMembers(): boolean {
+    const user = this.userService.getCurrentUser()();
+    if (!user) return false;
+    return user.permisoBase === 'admin' || (user.groupPermissions?.canAddMember || user.groupPermissions?.canDeleteMember || false);
+  }
+
+  manageGroup() {
+    this.router.navigate(['/home/groups/manage', this.groupId()]);
+  }
+
+  canAddTicket(): boolean {
+    const user: any = this.userService.getCurrentUser()();
+    if (!user) return false;
+    return user.permisoBase === 'admin' || (user.ticketPermissions?.canAdd ?? user.permissions?.canAdd ?? false);
+  }
+
+  createTicketInGroup() {
+    this.router.navigate(['/home/tickets/create'], { queryParams: { groupId: this.groupId() } });
+  }
+
+  // --- Drag & Drop Lógica ---
+  
+  dragStart(ticket: any) {
+    const user = this.userService.getCurrentUser()();
+    const isAdmin = user?.permisoBase === 'admin';
+    const isAsignado = ticket.asignadoId === user?.id;
+
+    if (isAdmin || isAsignado) {
+      this.draggedTicket = ticket;
+    } else {
+      this.draggedTicket = null;
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Acceso Denegado',
+        detail: 'Solo el usuario asignado puede mover este ticket.'
+      });
     }
+  }
 
-    getTicketsByStatus(status: string) {
-        return this.groupTickets().filter(t => t.estado === status);
-    }
+  dragEnd() {
+    this.draggedTicket = null;
+  }
 
-    openPreview(ticket: Ticket) {
-        this.previewTicket = ticket;
-        this.displayPreview = true;
-    }
-
-    viewFullDetail(id: number) {
-        this.router.navigate(['/home/tickets', id]);
-    }
-
-    manageGroup() {
-        this.router.navigate(['/home/groups/manage', this.groupId()]);
-    }
-
-    canAddTicket(): boolean {
-        const user: any = this.userService.getCurrentUser()();
-        if (!user) return false;
-        return user.permisoBase === 'admin' || (user.ticketPermissions?.canAdd ?? user.permissions?.canAdd ?? false);
-    }
-
-    createTicketInGroup() {
-        this.router.navigate(['/home/tickets/create'], { queryParams: { groupId: this.groupId() } });
-    }
-
-    draggedTicket: Ticket | null = null;
-    messageService = inject(MessageService);
-    userService = inject(UserService);
-
-    canMoveTicket(ticket: Ticket): boolean {
-        const user: any = this.userService.getCurrentUser()();
-        if (!user) return false;
-        if (user.permisoBase === 'admin') return true;
-        return ticket.asignadoA === user.username;
-    }
-
-    dragStart(ticket: Ticket) {
-        if (this.canMoveTicket(ticket)) {
-            this.draggedTicket = ticket;
-        } else {
-            this.draggedTicket = null;
-            this.messageService.add({ 
-                severity: 'error', 
-                summary: 'Permiso Denegado', 
-                detail: 'Solo el administrador o el usuario asignado pueden mover este ticket de estado.', 
-                life: 3000 
-            });
+  drop(statusId: string) {
+    if (this.draggedTicket && this.draggedTicket.estadoId !== statusId) {
+      const ticketId = this.draggedTicket.id;
+      this.ticketService.updateTicket(ticketId, { estadoId: statusId }).subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Actualizado',
+            detail: 'Estado de ticket actualizado correctamente.'
+          });
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo actualizar el estado del ticket.'
+          });
         }
+      });
     }
+  }
 
-    dragEnd() {
-        this.draggedTicket = null;
-    }
-
-    drop(event: any, newStatus: string) {
-        if (this.draggedTicket && this.draggedTicket.estado !== newStatus) {
-            // Update the ticket status using TicketService
-            this.ticketService.updateTicket(this.draggedTicket.id, { estado: newStatus as Ticket['estado'] });
-        }
-        this.draggedTicket = null;
-    }
+  getSeverity(prioridad: string): any {
+    const p = prioridad?.toUpperCase() || '';
+    if (p.includes('ALTA')) return 'danger';
+    if (p.includes('MEDIA')) return 'warning';
+    return 'info';
+  }
 }

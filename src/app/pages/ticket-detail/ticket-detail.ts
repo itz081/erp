@@ -37,7 +37,7 @@ export class TicketDetailComponent implements OnInit {
     confirmationService = inject(ConfirmationService);
     userService = inject(UserService);
 
-    ticketId = signal<number>(0);
+    ticketId = signal<string>('');
     ticket = computed(() => this.ticketService.getTicket(this.ticketId()));
     canEdit = computed(() => {
         const user = this.userService.getCurrentUser()();
@@ -56,8 +56,8 @@ export class TicketDetailComponent implements OnInit {
     editMode = false;
     ticketForm!: FormGroup;
 
-    prioridades = ['Baja', 'Media', 'Alta'];
-    estados = ['Pendiente', 'En progreso', 'Revision', 'Finalizado'];
+    prioridades = computed(() => this.ticketService.prioridades());
+    estados = computed(() => this.ticketService.estados());
     groupMembers = computed(() => {
         const t = this.ticket();
         if (t) {
@@ -67,13 +67,22 @@ export class TicketDetailComponent implements OnInit {
         return [];
     });
 
+    comments = signal<any[]>([]);
+    history = signal<any[]>([]);
     newCommentText = '';
 
     ngOnInit() {
         this.route.params.subscribe(params => {
-            this.ticketId.set(Number(params['id']));
+            const id = params['id'];
+            this.ticketId.set(id);
             this.initForm();
+            this.loadExtraInfo(id);
         });
+    }
+
+    loadExtraInfo(id: string) {
+        this.ticketService.loadComentarios(id).subscribe(c => this.comments.set(c));
+        this.ticketService.loadHistorial(id).subscribe(h => this.history.set(h));
     }
 
     initForm() {
@@ -82,9 +91,9 @@ export class TicketDetailComponent implements OnInit {
             this.ticketForm = this.fb.group({
                 titulo: [t.titulo, [Validators.required, Validators.minLength(5)]],
                 descripcion: [t.descripcion, [Validators.required, Validators.minLength(10)]],
-                estado: [t.estado, Validators.required],
-                prioridad: [t.prioridad, Validators.required],
-                asignadoA: [this.groupMembers().find((m: any) => m.username === t.asignadoA) || t.asignadoA, Validators.required],
+                estadoId: [t.estadoId, Validators.required],
+                prioridadId: [t.prioridadId, Validators.required],
+                asignadoId: [this.userService.getUsers()().find((u: any) => u.id === t.asignadoId) || null, Validators.required],
                 fechaLimite: [t.fechaLimite ? new Date(t.fechaLimite) : null, Validators.required]
             });
             this.ticketForm.disable();
@@ -108,14 +117,19 @@ export class TicketDetailComponent implements OnInit {
         }
         const formValues = this.ticketForm.value;
         const updates = {
-            ...formValues,
-            asignadoA: typeof formValues.asignadoA === 'string' ? formValues.asignadoA : formValues.asignadoA.username
+            titulo: formValues.titulo,
+            descripcion: formValues.descripcion,
+            estadoId: formValues.estadoId,
+            prioridadId: formValues.prioridadId,
+            asignadoId: formValues.asignadoId.id,
+            fechaLimite: formValues.fechaLimite
         };
 
-        this.ticketService.updateTicket(this.ticketId(), updates);
-        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Ticket actualizado' });
-        this.editMode = false;
-        this.ticketForm.disable();
+        this.ticketService.updateTicket(this.ticketId(), updates).subscribe(() => {
+            this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Ticket actualizado' });
+            this.editMode = false;
+            this.ticketForm.disable();
+        });
     }
 
     addComment() {
@@ -123,11 +137,13 @@ export class TicketDetailComponent implements OnInit {
             this.messageService.add({ severity: 'error', summary: 'Acceso Denegado', detail: 'No tienes permiso para comentar.' });
             return;
         }
-        const user = this.userService.getProfile();
+        const user = this.userService.getCurrentUser()();
         if (this.newCommentText.trim() && user) {
-            this.ticketService.addComment(this.ticketId(), user.fullName, this.newCommentText);
-            this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Comentario añadido' });
-            this.newCommentText = '';
+            this.ticketService.addComment(this.ticketId(), user.fullName || user.username, this.newCommentText).subscribe(() => {
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Comentario añadido' });
+                this.newCommentText = '';
+                this.loadExtraInfo(this.ticketId());
+            });
         }
     }
 
@@ -146,9 +162,15 @@ export class TicketDetailComponent implements OnInit {
             header: 'Confirmación',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.ticketService.deleteTicket(this.ticketId());
-                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Ticket eliminado' });
-                this.router.navigate(['/home/tickets']);
+                this.ticketService.deleteTicket(this.ticketId()).subscribe(() => {
+                    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Ticket eliminado' });
+                    const t = this.ticket();
+                    if (t) {
+                        this.router.navigate(['/home/groups', t.groupId]);
+                    } else {
+                        this.router.navigate(['/home/tickets']);
+                    }
+                });
             }
         });
     }

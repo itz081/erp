@@ -13,55 +13,66 @@
             [tableStyle]="{'min-width': '70rem'}">
             <ng-template pTemplate="header">
                 <tr>
-                    <th rowspan="2" class="align-bottom">Nombre</th>
-                    <th rowspan="2" class="align-bottom">Email</th>
-                    <th colspan="4" class="text-center border-bottom-1">Permisos Grupos</th>
-                    <th colspan="3" class="text-center border-bottom-1 border-left-1 border-right-1">Permisos Tickets
-                    </th>
-                    <th rowspan="2" class="align-bottom text-center">Acciones</th>
-                </tr>
-                <tr>
-                    <th class="text-center">Agregar</th>
-                    <th class="text-center">Editar</th>
-                    <th class="text-center">Eliminar</th>
-                    <th class="text-center">Comentar</th>
-                    <th class="text-center border-left-1">Agregar</th>
-                    <th class="text-center">Editar</th>
-                    <th class="text-center border-right-1">Eliminar</th>
+                    <th class="align-bottom">Nombre</th>
+                    <th class="align-bottom">Email</th>
+                    <th class="text-center">Permisos de Grupo</th>
+                    <th class="text-center">Permisos de Ticket</th>
+                    <th class="align-bottom text-center">Acciones</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-user>
                 <tr>
                     <td>{{user.fullName}}</td>
                     <td>{{user.email}}</td>
-                    <td class="text-center">
-                        <p-checkbox [(ngModel)]="user.groupPermissions!.canAdd" [binary]="true"
-                            (onChange)="onPermissionChange(user)"></p-checkbox>
+                    
+                    <!-- Permisos de Grupo en Lista -->
+                    <td>
+                        <div class="flex flex-column gap-2 p-2">
+                            <div class="flex align-items-center gap-2">
+                                <p-checkbox [(ngModel)]="user.groupPermissions!.canAdd" [binary]="true" (onChange)="onPermissionChange(user)" inputId="g_add_{{user.id}}"></p-checkbox>
+                                <label for="g_add_{{user.id}}" class="text-xs">Crear Grupo</label>
+                            </div>
+                            <div class="flex align-items-center gap-2">
+                                <p-checkbox [(ngModel)]="user.groupPermissions!.canEdit" [binary]="true" (onChange)="onPermissionChange(user)" inputId="g_edi_{{user.id}}"></p-checkbox>
+                                <label for="g_edi_{{user.id}}" class="text-xs">Editar Grupo</label>
+                            </div>
+                            <div class="flex align-items-center gap-2">
+                                <p-checkbox [(ngModel)]="user.groupPermissions!.canDelete" [binary]="true" (onChange)="onPermissionChange(user)" inputId="g_eli_{{user.id}}"></p-checkbox>
+                                <label for="g_eli_{{user.id}}" class="text-xs">Eliminar Grupo</label>
+                            </div>
+                            <div class="flex align-items-center gap-2">
+                                <p-checkbox [(ngModel)]="user.groupPermissions!.canAddMember" [binary]="true" (onChange)="onPermissionChange(user)" inputId="gm_add_{{user.id}}"></p-checkbox>
+                                <label for="gm_add_{{user.id}}" class="text-xs">Añadir Miembro</label>
+                            </div>
+                            <div class="flex align-items-center gap-2">
+                                <p-checkbox [(ngModel)]="user.groupPermissions!.canDeleteMember" [binary]="true" (onChange)="onPermissionChange(user)" inputId="gm_eli_{{user.id}}"></p-checkbox>
+                                <label for="gm_eli_{{user.id}}" class="text-xs">Eliminar Miembro</label>
+                            </div>
+                        </div>
                     </td>
-                    <td class="text-center">
-                        <p-checkbox [(ngModel)]="user.groupPermissions!.canEdit" [binary]="true"
-                            (onChange)="onPermissionChange(user)"></p-checkbox>
+
+                    <!-- Permisos de Ticket en Lista -->
+                    <td>
+                        <div class="flex flex-column gap-2 p-2">
+                            <div class="flex align-items-center gap-2">
+                                <p-checkbox [(ngModel)]="user.ticketPermissions!.canAdd" [binary]="true" (onChange)="onPermissionChange(user)" inputId="t_add_{{user.id}}"></p-checkbox>
+                                <label for="t_add_{{user.id}}" class="text-xs">Crear Ticket</label>
+                            </div>
+                            <div class="flex align-items-center gap-2">
+                                <p-checkbox [(ngModel)]="user.ticketPermissions!.canEdit" [binary]="true" (onChange)="onPermissionChange(user)" inputId="t_edi_{{user.id}}"></p-checkbox>
+                                <label for="t_edi_{{user.id}}" class="text-xs">Editar Ticket</label>
+                            </div>
+                            <div class="flex align-items-center gap-2">
+                                <p-checkbox [(ngModel)]="user.ticketPermissions!.canDelete" [binary]="true" (onChange)="onPermissionChange(user)" inputId="t_eli_{{user.id}}"></p-checkbox>
+                                <label for="t_eli_{{user.id}}" class="text-xs">Eliminar Ticket</label>
+                            </div>
+                            <div class="flex align-items-center gap-2">
+                                <p-checkbox [(ngModel)]="user.groupPermissions!.canComment" [binary]="true" (onChange)="onPermissionChange(user)" inputId="t_com_{{user.id}}"></p-checkbox>
+                                <label for="t_com_{{user.id}}" class="text-xs">Comentar</label>
+                            </div>
+                        </div>
                     </td>
-                    <td class="text-center">
-                        <p-checkbox [(ngModel)]="user.groupPermissions!.canDelete" [binary]="true"
-                            (onChange)="onPermissionChange(user)"></p-checkbox>
-                    </td>
-                    <td class="text-center">
-                        <p-checkbox [(ngModel)]="user.groupPermissions!.canComment" [binary]="true"
-                            (onChange)="onPermissionChange(user)"></p-checkbox>
-                    </td>
-                    <td class="text-center border-left-1">
-                        <p-checkbox [(ngModel)]="user.ticketPermissions!.canAdd" [binary]="true"
-                            (onChange)="onPermissionChange(user)"></p-checkbox>
-                    </td>
-                    <td class="text-center">
-                        <p-checkbox [(ngModel)]="user.ticketPermissions!.canEdit" [binary]="true"
-                            (onChange)="onPermissionChange(user)"></p-checkbox>
-                    </td>
-                    <td class="text-center border-right-1">
-                        <p-checkbox [(ngModel)]="user.ticketPermissions!.canDelete" [binary]="true"
-                            (onChange)="onPermissionChange(user)"></p-checkbox>
-                    </td>
+
                     <td class="text-center">
                         <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
                             (onClick)="deleteUser(user)" pTooltip="Eliminar Usuario"></p-button>

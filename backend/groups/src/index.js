@@ -12,6 +12,9 @@ const __dirname = dirname(__filename);
 dotenv.config({ path: join(__dirname, '../../.env') });
 
 const app = Fastify({ logger: false });
+app.setErrorHandler(function (error, request, reply) {
+  reply.status(500).send({ ok: false, error: error.message, stack: error.stack })
+});
 
 await app.register(cors, {
   origin: true,

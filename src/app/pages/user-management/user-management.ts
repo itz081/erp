@@ -57,7 +57,9 @@ export class UserManagementComponent {
             canAdd: false,
             canEdit: false,
             canDelete: false,
-            canComment: true
+            canComment: true,
+            canAddMember: false,
+            canDeleteMember: false
         },
         ticketPermissions: {
             canAdd: false,
@@ -117,7 +119,9 @@ export class UserManagementComponent {
                 canAdd: false,
                 canEdit: false,
                 canDelete: false,
-                canComment: true
+                canComment: true,
+                canAddMember: false,
+                canDeleteMember: false
             },
             ticketPermissions: {
                 canAdd: false,

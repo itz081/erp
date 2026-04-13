@@ -1,7 +1,7 @@
 <p-toast />
 <p-confirmDialog />
 
-<h2 class="section-header">Administración de Grupos</h2>
+<h2 class="section-header">Gestión de Grupos</h2>
 
 <p-divider />
 
@@ -25,18 +25,20 @@
                 <th pSortableColumn="categoria">Categoría <p-sortIcon field="categoria" /></th>
                 <th pSortableColumn="nivel">Nivel <p-sortIcon field="nivel" /></th>
                 <th pSortableColumn="autor">Autor <p-sortIcon field="autor" /></th>
+
                 <th>Miembros</th>
                 <th>Tickets</th>
                 <th>Acciones</th>
             </tr>
         </ng-template>
-        <ng-template pTemplate="body" let-group>
+        <ng-template pTemplate="body" let-group let-i="rowIndex">
             <tr>
-                <td>{{group.id}}</td>
+                <td>{{i + 1}}</td>
                 <td>{{group.nombre}}</td>
                 <td>{{group.categoria || 'N/A'}}</td>
                 <td>{{group.nivel || 'N/A'}}</td>
                 <td>{{group.autor || 'N/A'}}</td>
+
                 <td>{{group.miembros.length}}</td>
                 <td>{{group.tickets.length}}</td>
                 <td>
@@ -68,21 +70,23 @@
             <small class="p-error" *ngIf="submitted && !groupItem.nombre">El Nombre es requerido.</small>
         </div>
 
+
+
         <div class="field mb-4">
             <label for="categoria">Categoría</label>
-            <p-select id="categoria" [options]="categoryOptions" [(ngModel)]="groupItem.categoria" placeholder="Seleccione Categoría"
+            <p-select id="categoria" [options]="categoryOptions" optionLabel="label" optionValue="value" [(ngModel)]="groupItem.categoria" placeholder="Seleccione Categoría"
                 appendTo="body"></p-select>
         </div>
 
         <div class="field mb-4">
             <label for="nivel">Nivel</label>
-            <p-select id="nivel" [options]="levelOptions" [(ngModel)]="groupItem.nivel" placeholder="Seleccione Nivel"
+            <p-select id="nivel" [options]="levelOptions" optionLabel="label" optionValue="value" [(ngModel)]="groupItem.nivel" placeholder="Seleccione Nivel"
                 appendTo="body"></p-select>
         </div>
 
         <div class="field mb-4">
             <label for="autor">Autor</label>
-            <input type="text" pInputText id="autor" [(ngModel)]="groupItem.autor" placeholder="Nombre del autor" />
+            <input type="text" pInputText id="autor" [(ngModel)]="groupItem.autor" placeholder="Nombre del autor (opcional)" />
         </div>
 
     </ng-template>

@@ -22,32 +22,33 @@ export default async function groupsRoutes(fastify) {
   fastify.get('/', { preHandler: verifyToken }, async (request) => {
     const userId = request.jwtUser.sub;
     const permisos = request.jwtUser.permisos || [];
-    const all = request.query.all === 'true' && permisos.includes('groups:manage');
+    const isAdmin = permisos.includes('users:manage');
+    const all = isAdmin || (request.query.all === 'true' && (permisos.includes('groups:add') || permisos.includes('groups:edit')));
 
     let queryText;
     let params;
 
     if (all) {
       queryText = `
-        SELECT g.id, g.nombre, g.descripcion, g.creador_id, g.creado_en,
+        SELECT g.id, g.nombre, g.descripcion, g.categoria, g.nivel, g.autor, g.creador_id, g.creado_en,
                u.nombre_completo AS creador_nombre,
                COUNT(DISTINCT gm.usuario_id) AS total_miembros
         FROM grupos g
         LEFT JOIN usuarios u ON u.id = g.creador_id
         LEFT JOIN grupo_miembros gm ON gm.grupo_id = g.id
-        GROUP BY g.id, u.nombre_completo
+        GROUP BY g.id, g.categoria, g.nivel, g.autor, u.nombre_completo
         ORDER BY g.nombre`;
       params = [];
     } else {
       queryText = `
-        SELECT g.id, g.nombre, g.descripcion, g.creador_id, g.creado_en,
+        SELECT g.id, g.nombre, g.descripcion, g.categoria, g.nivel, g.autor, g.creador_id, g.creado_en,
                u.nombre_completo AS creador_nombre,
                COUNT(DISTINCT gm2.usuario_id) AS total_miembros
         FROM grupos g
         INNER JOIN grupo_miembros gm ON gm.grupo_id = g.id AND gm.usuario_id = $1
         LEFT JOIN usuarios u ON u.id = g.creador_id
         LEFT JOIN grupo_miembros gm2 ON gm2.grupo_id = g.id
-        GROUP BY g.id, u.nombre_completo
+        GROUP BY g.id, g.categoria, g.nivel, g.autor, u.nombre_completo
         ORDER BY g.nombre`;
       params = [userId];
     }
@@ -60,7 +61,7 @@ export default async function groupsRoutes(fastify) {
     const { id } = request.params;
 
     const { rows } = await pool.query(
-      `SELECT g.id, g.nombre, g.descripcion, g.creador_id, g.creado_en,
+      `SELECT g.id, g.nombre, g.descripcion, g.categoria, g.nivel, g.autor, g.creador_id, g.creado_en,
               u.nombre_completo AS creador_nombre
        FROM grupos g
        LEFT JOIN usuarios u ON u.id = g.creador_id
@@ -88,11 +89,11 @@ export default async function groupsRoutes(fastify) {
   });
 
   fastify.post('/', { preHandler: verifyToken }, async (request, res) => {
-    const { nombre, descripcion } = request.body;
+    const { nombre, descripcion, categoria, nivel, autor } = request.body;
     const creador_id = request.jwtUser.sub;
     const permisos = request.jwtUser.permisos || [];
 
-    if (!permisos.includes('groups:manage')) {
+    if (!permisos.includes('groups:add')) {
       res.code(403);
       return replyError(403, 'SxGP403', 'Sin permiso para crear grupos');
     }
@@ -103,16 +104,26 @@ export default async function groupsRoutes(fastify) {
     }
 
     const { rows } = await pool.query(
-      `INSERT INTO grupos (nombre, descripcion, creador_id) VALUES ($1, $2, $3) RETURNING *`,
-      [nombre.trim(), descripcion || null, creador_id]
+      `INSERT INTO grupos (nombre, descripcion, categoria, nivel, autor, creador_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [nombre.trim(), descripcion || null, categoria || 'General', nivel || 'Básico', autor || null, creador_id]
     );
 
     const grupo = rows[0];
 
+    // Siempre agregar al creador y buscar al administrador para agregarlo también
     await pool.query(
       'INSERT INTO grupo_miembros (grupo_id, usuario_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
       [grupo.id, creador_id]
     );
+
+    const adminQuery = await pool.query("SELECT id FROM usuarios WHERE username = 'admin' LIMIT 1");
+    if (adminQuery.rowCount > 0) {
+      const adminId = adminQuery.rows[0].id;
+      await pool.query(
+        'INSERT INTO grupo_miembros (grupo_id, usuario_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+        [grupo.id, adminId]
+      );
+    }
 
     res.code(201);
     return reply(201, 'SxGP201', { grupo });
@@ -120,10 +131,10 @@ export default async function groupsRoutes(fastify) {
 
   fastify.put('/:id', { preHandler: verifyToken }, async (request, res) => {
     const { id } = request.params;
-    const { nombre, descripcion } = request.body;
+    const { nombre, descripcion, categoria, nivel, autor } = request.body;
     const permisos = request.jwtUser.permisos || [];
 
-    if (!permisos.includes('groups:manage')) {
+    if (!permisos.includes('groups:edit')) {
       res.code(403);
       return replyError(403, 'SxGP403', 'Sin permiso para editar grupos');
     }
@@ -131,9 +142,12 @@ export default async function groupsRoutes(fastify) {
     const { rows } = await pool.query(
       `UPDATE grupos SET
          nombre = COALESCE($1, nombre),
-         descripcion = COALESCE($2, descripcion)
-       WHERE id = $3 RETURNING *`,
-      [nombre || null, descripcion || null, id]
+         descripcion = COALESCE($2, descripcion),
+         categoria = COALESCE($3, categoria),
+         nivel = COALESCE($4, nivel),
+         autor = COALESCE($5, autor)
+       WHERE id = $6 RETURNING *`,
+      [nombre || null, descripcion || null, categoria || null, nivel || null, autor || null, id]
     );
 
     if (rows.length === 0) {
@@ -148,7 +162,7 @@ export default async function groupsRoutes(fastify) {
     const { id } = request.params;
     const permisos = request.jwtUser.permisos || [];
 
-    if (!permisos.includes('groups:manage')) {
+    if (!permisos.includes('groups:delete')) {
       res.code(403);
       return replyError(403, 'SxGP403', 'Sin permiso para eliminar grupos');
     }

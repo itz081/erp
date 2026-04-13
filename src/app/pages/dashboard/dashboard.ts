@@ -4,10 +4,9 @@ import { Router } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { ChartModule } from 'primeng/chart';
 import { TableModule } from 'primeng/table';
-import { SelectModule } from 'primeng/select';
-import { ToolbarModule } from 'primeng/toolbar';
 import { ButtonModule } from 'primeng/button';
-import { FormsModule } from '@angular/forms';
+import { TagModule } from 'primeng/tag';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TicketService } from '../../services/ticket.service';
 import { GroupService } from '../../services/group.service';
 import { UserService } from '../../services/user.service';
@@ -15,9 +14,9 @@ import { UserService } from '../../services/user.service';
 @Component({
     selector: 'app-dashboard',
     standalone: true,
-    imports: [CommonModule, CardModule, ChartModule, TableModule, SelectModule, ToolbarModule, ButtonModule, FormsModule],
+    imports: [CommonModule, CardModule, ChartModule, TableModule, ButtonModule, TagModule, SkeletonModule],
     templateUrl: './dashboard.html',
-    styles: []
+    styleUrl: './dashboard.css'
 })
 export class DashboardComponent implements OnInit {
     ticketService = inject(TicketService);
@@ -25,90 +24,128 @@ export class DashboardComponent implements OnInit {
     userService = inject(UserService);
     router = inject(Router);
 
-    canAdd = computed(() => {
-        const user: any = this.userService.getCurrentUser()();
-        return user?.permisoBase === 'admin' || (user?.ticketPermissions?.canAdd ?? user?.permissions?.canAdd ?? false);
+    currentUser = this.userService.getCurrentUser();
+
+    isAdmin = computed(() => this.currentUser()?.permisoBase === 'admin');
+
+    /** Grupos del usuario actual */
+    userGroups = computed(() => {
+        const user = this.currentUser();
+        if (!user) return [];
+        const allGroups = this.groupService.groups();
+        if (this.isAdmin()) return allGroups;
+        return allGroups.filter(g =>
+            g.miembros?.some((m: any) => m.username === user.username || m.id === user.id)
+        );
+    });
+
+    /** Tickets del usuario actual */
+    userTickets = computed(() => {
+        const user = this.currentUser();
+        if (!user) return [];
+        const all = this.ticketService.tickets();
+        if (this.isAdmin()) return all;
+        return all.filter(t => t.asignadoId === user.id || t.asignadoA === user.username);
+    });
+
+    /** Grupos con sus tickets para la tabla */
+    groupsWithTickets = computed(() => {
+        const ts = this.userTickets();
+        return this.userGroups().map(g => ({
+            ...g,
+            totalTickets: ts.filter(t => t.groupId === g.id).length,
+        }));
+    });
+
+    /** Contadores rápidos */
+    stats = computed(() => {
+        const tickets = this.userTickets();
+        const grupos = this.userGroups();
+        return {
+            total: tickets.length,
+            pendientes: tickets.filter(t => t.estado?.toLowerCase().includes('pendiente')).length,
+            enProgreso: tickets.filter(t => t.estado?.toLowerCase().includes('curso') || t.estado?.toLowerCase().includes('progreso')).length,
+            revision: tickets.filter(t => t.estado?.toLowerCase().includes('revision') || t.estado?.toLowerCase().includes('revisión')).length,
+            finalizados: tickets.filter(t => t.estado?.toLowerCase().includes('terminado') || t.estado?.toLowerCase().includes('final')).length,
+            grupos: grupos.length,
+        };
     });
 
     chartData: any;
     chartOptions: any;
 
-    selectedGroup: any;
-    groups = computed(() => {
-        const currentUser = this.userService.getCurrentUser()();
-        const isAdmin = currentUser?.permisoBase === 'admin';
-
-        let gs = this.groupService.groups();
-        if (!isAdmin) {
-            gs = gs.filter(g => g.miembros.some((m: any) => m.username === currentUser?.username));
-        }
-
-        const ts = this.ticketService.tickets();
-        return gs.map(g => ({
-            ...g,
-            tickets: ts.filter(t => t.groupId === g.id) 
-        }));
-    });
-    
-    allTickets = computed(() => {
-        const user = this.userService.getCurrentUser()();
-        const isAdmin = user?.permisoBase === 'admin';
-        const ts = this.ticketService.tickets();
-        if (isAdmin) {
-            return ts;
-        }
-        return ts.filter(t => t.asignadoA === user?.username);
-    });
-
     constructor() {
         effect(() => {
-            this.updateChart();
+            this.buildChart();
         });
     }
 
     ngOnInit() {
+        // Cargar grupos con miembros para poder filtrar correctamente
+        this.groupService.loadGroupsWithMembers();
     }
 
-    updateChart() {
-        const statuses = ['Pendiente', 'En progreso', 'Revision', 'Finalizado'];
-        const data = statuses.map(status => this.allTickets().filter(t => t.estado === status).length);
+    private buildChart() {
+        const tickets = this.userTickets();
+        const allEstados = this.ticketService.estados();
 
-        this.chartData = {
-            labels: statuses,
-            datasets: [
-                {
-                    data: data,
-                    backgroundColor: [
-                        '#93C5FD',
-                        '#FDBA74',
-                        '#60A5FA',
-                        '#86EFAC'
-                    ]
-                }
-            ]
-        };
+        if (allEstados.length > 0) {
+            const labels = allEstados.map((e: any) => e.nombre);
+            const data = allEstados.map((e: any) =>
+                tickets.filter(t => t.estado?.toLowerCase() === e.nombre?.toLowerCase()).length
+            );
+            const colors = allEstados.map((e: any) => e.color || '#6366f1');
+
+            this.chartData = {
+                labels,
+                datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#ffffff' }]
+            };
+        } else {
+            // Fallback si aún no cargaron los catálogos
+            const statuses = ['Pendiente', 'En progreso', 'Revisión', 'Finalizado'];
+            this.chartData = {
+                labels: statuses,
+                datasets: [{
+                    data: statuses.map(s => tickets.filter(t => t.estado?.toLowerCase().includes(s.split(' ')[0].toLowerCase())).length),
+                    backgroundColor: ['#f59e0b', '#3b82f6', '#8b5cf6', '#10b981'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            };
+        }
+
         this.chartOptions = {
             plugins: {
                 legend: {
-                    labels: {
-                        color: '#495057'
-                    }
+                    position: 'bottom',
+                    labels: { color: '#6b7280', padding: 16, font: { size: 12 } }
                 }
-            }
+            },
+            responsive: true,
+            maintainAspectRatio: false,
         };
     }
 
-    onGroupSelect(event: any) {
-        if (event.value) {
-            this.router.navigate(['/home/groups', event.value.id]);
-        }
+    getEstadoSeverity(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
+        const s = estado?.toLowerCase() || '';
+        if (s.includes('final')) return 'success';
+        if (s.includes('progreso')) return 'info';
+        if (s.includes('revision') || s.includes('revisión')) return 'warn';
+        return 'secondary';
     }
 
-    createTicket() {
-        this.router.navigate(['/home/tickets/create']);
+    getPrioridadSeverity(prioridad: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
+        const p = prioridad?.toLowerCase() || '';
+        if (p.includes('alta') || p.includes('crítica') || p.includes('critica')) return 'danger';
+        if (p.includes('media')) return 'warn';
+        return 'secondary';
     }
 
     viewTicket(id: number) {
         this.router.navigate(['/home/tickets', id]);
+    }
+
+    viewGroup(id: number) {
+        this.router.navigate(['/home/groups', id]);
     }
 }

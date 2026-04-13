@@ -33,53 +33,52 @@ export class TicketCreateComponent implements OnInit {
 
     ticketForm!: FormGroup;
 
-    prioridades = ['Baja', 'Media', 'Alta'];
-    estados = ['Pendiente', 'En progreso', 'Revision', 'Finalizado'];
+    prioridades = computed(() => this.ticketService.prioridades());
+    estados = computed(() => this.ticketService.estados());
     groups = computed(() => this.groupService.groups());
 
-    assignableUsers: any[] = [];
+    allUsers = computed(() => this.userService.getUsers()());
 
     ngOnInit() {
+        // Verificar permisos
+        const user = this.userService.getCurrentUser()();
+        const canAdd = user?.permisoBase === 'admin' || (user?.ticketPermissions?.canAdd ?? false);
+        if (!canAdd) {
+            this.messageService.add({ severity: 'error', summary: 'Acceso Denegado', detail: 'No tienes permisos para crear tickets.' });
+            this.router.navigate(['/home/dashboard']);
+            return;
+        }
+
         this.ticketForm = this.fb.group({
             titulo: ['', [Validators.required, Validators.minLength(5)]],
             descripcion: ['', [Validators.required, Validators.minLength(10)]],
-            estado: ['Pendiente', Validators.required],
-            prioridad: ['Media', Validators.required],
+            estadoId: [null, Validators.required],
+            prioridadId: [null, Validators.required],
             groupId: [null, Validators.required],
-            asignadoA: [null, Validators.required],
+            asignadoId: [null, Validators.required],
             fechaLimite: [null, Validators.required]
         });
 
+        // Cargar catálogos y poner defaults precisos
+        this.ticketService.loadCatalogs().subscribe(() => {
+            const pendiente = this.estados().find(e => e.nombre === 'PENDIENTE');
+            const media = this.prioridades().find(p => p.nombre === 'MEDIA');
+            if (pendiente) this.ticketForm.patchValue({ estadoId: pendiente.id });
+            if (media) this.ticketForm.patchValue({ prioridadId: media.id });
+        });
+
+        // Al cambiar de grupo, opcionalmente podríamos filtrar, 
+        // pero el usuario pidió ver TODOS los usuarios de la base de datos.
         this.ticketForm.get('groupId')?.valueChanges.subscribe(groupId => {
-            if (groupId) {
-                const group = this.groupService.getGroup(groupId);
-                const miembros = group ? group.miembros : [];
-                const currentUser = this.userService.getCurrentUser()();
-
-                if (currentUser?.permisoBase === 'admin') {
-                    this.assignableUsers = miembros;
-                } else if (currentUser) {
-                    // Usuario regular: solo puede asignarse a sí mismo, siempre que sea miembro del grupo
-                    const isMember = miembros.some((m: any) => m.username === currentUser.username);
-                    this.assignableUsers = isMember ? [currentUser] : [];
-                }
-
-                if (this.assignableUsers.length > 0) {
-                    this.ticketForm.patchValue({ asignadoA: this.assignableUsers[0] });
-                } else {
-                    this.ticketForm.patchValue({ asignadoA: null });
-                }
-            } else {
-                this.assignableUsers = [];
-                this.ticketForm.patchValue({ asignadoA: null });
+            if (!this.ticketForm.get('asignadoId')?.value && this.allUsers().length > 0) {
+                 this.ticketForm.patchValue({ asignadoId: this.allUsers()[0] });
             }
         });
 
         this.route.queryParams.subscribe(params => {
             if (params['groupId']) {
-                setTimeout(() => {
-                    this.ticketForm.patchValue({ groupId: Number(params['groupId']) });
-                });
+                // El ID ahora es UUID (string)
+                this.ticketForm.patchValue({ groupId: params['groupId'] });
             }
         });
     }
@@ -100,16 +99,26 @@ export class TicketCreateComponent implements OnInit {
         }
 
         const newTicketData = {
-            ...formValues,
-            asignadoA: formValues.asignadoA.username,
+            titulo: formValues.titulo,
+            descripcion: formValues.descripcion,
+            groupId: formValues.groupId,
+            asignadoId: formValues.asignadoId.id, // El objeto del p-select tiene .id
+            estadoId: formValues.estadoId,
+            prioridadId: formValues.prioridadId,
+            fechaLimite: formValues.fechaLimite
         };
 
-        this.ticketService.createTicket(newTicketData);
-        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Ticket creado exitosamente' });
-
-        setTimeout(() => {
-            this.router.navigate(['/home/groups', formValues.groupId]);
-        }, 1000);
+        this.ticketService.createTicket(newTicketData).subscribe({
+            next: () => {
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Ticket creado exitosamente y guardado en la base de datos' });
+                setTimeout(() => {
+                    this.router.navigate(['/home/groups', formValues.groupId]);
+                }, 1000);
+            },
+            error: (err) => {
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar el ticket en la base de datos' });
+            }
+        });
     }
 
     cancel() {

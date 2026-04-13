@@ -30,7 +30,7 @@ export class GroupManageComponent implements OnInit {
     confirmationService = inject(ConfirmationService);
     messageService = inject(MessageService);
 
-    groupId = signal<number>(0);
+    groupId = signal<string>('');
     group = computed(() => this.groupService.getGroup(this.groupId()));
     
     // Get users that are NOT in the current group
@@ -43,25 +43,30 @@ export class GroupManageComponent implements OnInit {
 
     canAdd = computed(() => {
         const user = this.userService.getCurrentUser()();
-        return user?.permisoBase === 'admin' || (user?.groupPermissions?.canAdd ?? user?.permissions?.canAdd ?? false);
+        return user?.permisoBase === 'admin' || (user?.groupPermissions?.canAddMember ?? false);
     });
 
     canDelete = computed(() => {
         const user = this.userService.getCurrentUser()();
-        return user?.permisoBase === 'admin' || (user?.groupPermissions?.canDelete ?? user?.permissions?.canDelete ?? false);
+        return user?.permisoBase === 'admin' || (user?.groupPermissions?.canDeleteMember ?? false);
     });
 
     ngOnInit() {
+        this.userService.loadUsers().subscribe();
         this.route.params.subscribe(params => {
-            this.groupId.set(Number(params['id']));
+            const id = params['id'];
+            this.groupId.set(id);
+            this.groupService.loadGroupById(id).subscribe();
         });
     }
 
     addUser() {
         if (this.selectedUser) {
-            this.groupService.addUserToGroup(this.groupId() as any, this.selectedUser.username, this.selectedUser.id || this.selectedUser.email);
-            this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario añadido al grupo' });
-            this.selectedUser = null;
+            this.groupService.addUserToGroup(this.groupId(), this.selectedUser.username, this.selectedUser.id!).subscribe(() => {
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario añadido al grupo' });
+                this.selectedUser = null;
+                this.groupService.loadGroupById(this.groupId()).subscribe();
+            });
         } else {
             this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Por favor selecciona un usuario' });
         }
@@ -70,15 +75,19 @@ export class GroupManageComponent implements OnInit {
     confirmRemoveUser(username: string) {
         // Encontrar el usuario para obtener su ID
         const userToRemove = this.userService.getUsers()().find(u => u.username === username);
-        const userId = userToRemove?.id || username;
+        const userId = userToRemove?.id;
+
+        if (!userId) return;
 
         this.confirmationService.confirm({
             message: `¿Estás seguro de eliminar a ${username} del grupo?`,
             header: 'Confirmación',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.groupService.removeUserFromGroup(this.groupId() as any, userId);
-                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario eliminado' });
+                this.groupService.removeUserFromGroup(this.groupId(), userId).subscribe(() => {
+                    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario eliminado' });
+                    this.groupService.loadGroupById(this.groupId()).subscribe();
+                });
             }
         });
     }

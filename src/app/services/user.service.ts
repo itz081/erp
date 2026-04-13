@@ -10,6 +10,8 @@ export interface GroupPermissions {
     canEdit: boolean;
     canDelete: boolean;
     canComment: boolean;
+    canAddMember: boolean;
+    canDeleteMember: boolean;
 }
 
 export interface TicketPermissions {
@@ -35,6 +37,7 @@ export interface UserProfile {
     birthDate: string;
     password?: string;
     groupIds?: number[];
+    grupos?: any[];          // grupos del backend
     permisoBase: PermisoBase;
     permissions?: UserPermissions;
     groupPermissions?: GroupPermissions;
@@ -62,11 +65,11 @@ export class UserService {
     }
 
     private mapBackendUser(backendUser: any): UserProfile {
-        const permisosArray: string[] = Array.isArray(backendUser.permisos) 
+        const permisosArray: string[] = Array.isArray(backendUser.permisos)
             ? backendUser.permisos.map((p: any) => typeof p === 'string' ? p : p.nombre)
             : [];
-        const isAdmin = permisosArray.includes('users:manage') && permisosArray.includes('groups:manage');
-        
+        const isAdmin = permisosArray.includes('users:manage');
+
         const permissions: UserPermissions = {
             canAdd: isAdmin || permisosArray.includes('tickets:add'),
             canEdit: isAdmin || permisosArray.includes('tickets:edit'),
@@ -75,10 +78,12 @@ export class UserService {
         };
 
         const groupPermissions: GroupPermissions = {
-            canAdd: isAdmin || permisosArray.includes('groups:manage'),
-            canEdit: isAdmin || permisosArray.includes('groups:manage'),
-            canDelete: isAdmin || permisosArray.includes('groups:manage'),
-            canComment: true
+            canAdd: isAdmin || permisosArray.includes('groups:add'),
+            canEdit: isAdmin || permisosArray.includes('groups:edit'),
+            canDelete: isAdmin || permisosArray.includes('groups:delete'),
+            canComment: isAdmin || permisosArray.includes('tickets:comment'),
+            canAddMember: isAdmin || permisosArray.includes('groups:member-add'),
+            canDeleteMember: isAdmin || permisosArray.includes('groups:member-delete')
         };
 
         const ticketPermissions: TicketPermissions = {
@@ -95,6 +100,7 @@ export class UserService {
             phone: backendUser.telefono || '',
             address: backendUser.direccion || '',
             birthDate: '1990-01-01',
+            grupos: backendUser.grupos || [],
             permisoBase: isAdmin ? 'admin' : 'user',
             permissions,
             groupPermissions,
@@ -157,8 +163,28 @@ export class UserService {
         return this.http.post<any>(`${API_URL}/auth/register`, payload);
     }
 
-    saveProfile(profile: UserProfile): void {
-        this.http.put<any>(`${API_URL}/users/${profile.id}`, profile).subscribe(() => this.loadUsers().subscribe());
+    /**
+     * Guarda el perfil en el backend y actualiza el signal en tiempo real.
+     * Retorna un Observable para que el componente reaccione al resultado.
+     */
+    saveProfile(profile: UserProfile): Observable<any> {
+        if (!profile.id) return of(null);
+        const payload = {
+            nombre_completo: profile.fullName,
+            direccion: profile.address,
+            telefono: profile.phone,
+        };
+        return this.http.put<any>(`${API_URL}/users/${profile.id}`, payload).pipe(
+            tap(() => {
+                // Actualizar el signal del usuario actual inmediatamente
+                const current = this.currentUserSignal();
+                if (current && current.id === profile.id) {
+                    this.currentUserSignal.set({ ...current, ...profile });
+                }
+                // Refrescar desde el backend para tener datos canónicos
+                this.loadCurrentUser().subscribe();
+            })
+        );
     }
 
     private loadingUsers = false;
@@ -179,7 +205,7 @@ export class UserService {
         if (user && user.id) {
             const body = { permisos_globales: [] as string[] };
             if (permisoBase === 'admin') {
-                body.permisos_globales = ['tickets:add', 'tickets:edit', 'tickets:delete', 'tickets:move', 'tickets:comment', 'groups:manage', 'users:manage'];
+                body.permisos_globales = ['tickets:add', 'tickets:edit', 'tickets:delete', 'tickets:move', 'tickets:comment', 'groups:add', 'groups:edit', 'groups:delete', 'groups:member-add', 'groups:member-delete', 'groups:manage', 'users:manage'];
             }
             this.http.put(`${API_URL}/users/${user.id}/permisos`, body).subscribe(() => this.loadUsers().subscribe());
         }
@@ -189,11 +215,27 @@ export class UserService {
         const user = this.usersSignal().find(u => u.email === email);
         if (user && user.id) {
             const permisos_globales: string[] = [];
+
             if (ticketPermissions.canAdd) permisos_globales.push('tickets:add');
             if (ticketPermissions.canEdit) permisos_globales.push('tickets:edit');
             if (ticketPermissions.canDelete) permisos_globales.push('tickets:delete');
-            if (groupPermissions.canAdd) permisos_globales.push('groups:manage'); // Simplificación
-            
+
+            if (groupPermissions.canAdd) permisos_globales.push('groups:add');
+            if (groupPermissions.canEdit) permisos_globales.push('groups:edit');
+            if (groupPermissions.canDelete) permisos_globales.push('groups:delete');
+            if (groupPermissions.canAddMember) permisos_globales.push('groups:member-add');
+            if (groupPermissions.canDeleteMember) permisos_globales.push('groups:member-delete');
+
+            if (groupPermissions.canComment) {
+                permisos_globales.push('tickets:comment');
+            }
+
+            // Preservar permisos de administración si el usuario ya era admin
+            if (user.permisoBase === 'admin') {
+                if (!permisos_globales.includes('users:manage')) permisos_globales.push('users:manage');
+                if (!permisos_globales.includes('groups:manage')) permisos_globales.push('groups:manage');
+            }
+
             this.http.put(`${API_URL}/users/${user.id}/permisos`, { permisos_globales }).subscribe(() => this.loadUsers().subscribe());
         }
     }
@@ -226,7 +268,6 @@ export class UserService {
     }
 
     validateCredentials(email: string, pass: string): UserProfile | null {
-        // Obsoleto, usar login() observable
         return null;
     }
 }

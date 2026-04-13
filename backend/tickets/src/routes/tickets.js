@@ -148,21 +148,14 @@ export default async function ticketsRoutes(fastify) {
     }
 
     const ticket = existing.rows[0];
-    const isAuthor = ticket.autor_id === userId;
-    const isAssigned = ticket.asignado_id === userId;
-    const canEdit = permisos.includes('tickets:edit');
-    const canMove = permisos.includes('tickets:move');
+    const isAdmin = permisos.includes('users:manage');
+    const isOwner = ticket.autor_id === userId;
+    const isAsig = ticket.asignado_id === userId;
+    const hasGlobalEdit = permisos.includes('tickets:edit');
 
-    if (estado_id && estado_id !== ticket.estado_id) {
-      if (!canMove || !isAssigned) {
-        res.code(403);
-        return replyError(403, 'SxTK403', 'Sin permiso para mover ticket o no estás asignado');
-      }
-    }
-
-    if ((titulo || descripcion || asignado_id || prioridad_id || fecha_final) && !canEdit) {
+    if (!isAdmin && !isOwner && !isAsig && !hasGlobalEdit) {
       res.code(403);
-      return replyError(403, 'SxTK403', 'Sin permiso para editar tickets');
+      return replyError(403, 'SxTK403', 'Sin permiso para editar este ticket');
     }
 
     const { rows } = await pool.query(

@@ -22,9 +22,10 @@ async function verifyToken(request, res) {
 export default async function usersRoutes(fastify) {
   fastify.get('/', { preHandler: verifyToken }, async (request, res) => {
     const { rows } = await pool.query(
-      `SELECT id, nombre_completo, username, email, permisos_globales, 
-              direccion, telefono, fecha_inicio, last_login, creado_en
-       FROM usuarios ORDER BY nombre_completo`
+      `SELECT u.id, u.nombre_completo, u.username, u.email, u.permisos_globales, 
+              u.direccion, u.telefono, u.fecha_inicio, u.last_login, u.creado_en,
+              (SELECT json_agg(p.nombre) FROM permisos p WHERE p.id = ANY(u.permisos_globales)) as permisos
+       FROM usuarios u ORDER BY u.nombre_completo`
     );
     return reply(200, 'SxUS200', { users: rows });
   });
@@ -93,12 +94,21 @@ export default async function usersRoutes(fastify) {
 
   fastify.put('/:id/permisos', { preHandler: verifyToken }, async (request, res) => {
     const { id } = request.params;
-    const { permisos_globales } = request.body;
+    let { permisos_globales } = request.body;
 
     const callerPerms = request.jwtUser.permisos || [];
     if (!callerPerms.includes('users:manage')) {
       res.code(403);
       return replyError(403, 'SxUS403', 'Sin permiso para gestionar permisos');
+    }
+
+    // Si los permisos vienen como nombres, resolver a IDs
+    if (permisos_globales && permisos_globales.length > 0 && !permisos_globales[0].match(/^[0-9a-fA-F-]{36}$/)) {
+      const { rows } = await pool.query(
+        'SELECT id FROM permisos WHERE nombre = ANY($1)',
+        [permisos_globales]
+      );
+      permisos_globales = rows.map(r => r.id);
     }
 
     await pool.query(

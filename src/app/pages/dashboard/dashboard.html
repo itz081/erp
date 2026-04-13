@@ -1,74 +1,175 @@
-<p-toolbar>
-    <div class="p-toolbar-group-start">
-        <h2>Dashboard</h2>
-    </div>
-    <div class="p-toolbar-group-end mr-4">
-        <p-button *ngIf="canAdd()" label="Crear Ticket" icon="pi pi-plus" (onClick)="createTicket()"></p-button>
-    </div>
-</p-toolbar>
+<div class="dashboard-wrapper">
 
-<div class="grid mt-3 mr-3 ml-3">
-    <div class="col-12 md:col-8">
-        <p-card header="Todos los Grupos">
-            <p-table [value]="groups()" [paginator]="true" [rows]="5" responsiveLayout="scroll">
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th>Nombre</th>
-                        <th class="text-center">Miembros</th>
-                        <th class="text-center">Tickets</th>
-                        <th class="text-center">Acción</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-group>
-                    <tr>
-                        <td>{{group.nombre}}</td>
-                        <td class="text-center">{{group.miembros.length}}</td>
-                        <td class="text-center">{{group.tickets.length}}</td>
-                        <td class="text-center">
-                            <p-button icon="pi pi-eye" [rounded]="true" [text]="true" 
-                                (onClick)="onGroupSelect({value: group})"></p-button>
-                        </td>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="emptymessage">
-                    <tr>
-                        <td colspan="4">No hay grupos creados.</td>
-                    </tr>
-                </ng-template>
-            </p-table>
-        </p-card>
+  <!-- ─── HEADER ──────────────────────────────────────────── -->
+  <div class="dashboard-header">
+    <div>
+      <h2 class="dashboard-title">
+        Bienvenido, {{ currentUser()?.fullName || currentUser()?.username }}
+      </h2>
+      <p class="dashboard-subtitle">
+        @if (isAdmin()) { Vista de administrador — todos los datos del sistema }
+        @else { Tu resumen personal de grupos y tickets }
+      </p>
     </div>
-    <div class="col-12 md:col-4">
-        <p-card header="Estadísticas de Tickets">
-            <p-chart type="pie" [data]="chartData" [options]="chartOptions" height="250px"></p-chart>
-        </p-card>
-    </div>
-</div>
+  </div>
 
-<div class="mt-4 mr-3 ml-3">
-    <p-card header="Resumen de Tickets Recientes">
-        <p-table [value]="allTickets()" [paginator]="true" [rows]="5" responsiveLayout="scroll">
-            <ng-template pTemplate="header">
-                <tr>
-                    <th>Título</th>
-                    <th>Estado</th>
-                    <th>Prioridad</th>
-                    <th>Fecha Límite</th>
-                    <th class="text-center">Acciones</th>
-                </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-ticket>
-                <tr>
-                    <td>{{ticket.titulo}}</td>
-                    <td>{{ticket.estado}}</td>
-                    <td>{{ticket.prioridad}}</td>
-                    <td>{{ticket.fechaLimite | date}}</td>
-                    <td class="text-center">
-                        <p-button icon="pi pi-eye" [rounded]="true" [text]="true"
-                            (onClick)="viewTicket(ticket.id)"></p-button>
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
+  <!-- ─── STAT CARDS ──────────────────────────────────────── -->
+  <div class="stats-grid">
+    <div class="stat-card stat-total">
+      <div class="stat-icon"><i class="pi pi-ticket"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats().total }}</span>
+        <span class="stat-label">Total Tickets</span>
+      </div>
+    </div>
+    <div class="stat-card stat-pending">
+      <div class="stat-icon"><i class="pi pi-clock"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats().pendientes }}</span>
+        <span class="stat-label">Pendientes</span>
+      </div>
+    </div>
+    <div class="stat-card stat-progress">
+      <div class="stat-icon"><i class="pi pi-spin pi-spinner"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats().enProgreso }}</span>
+        <span class="stat-label">En Progreso</span>
+      </div>
+    </div>
+    <div class="stat-card stat-revision" style="background: rgba(139, 92, 246, 0.1); border-left: 4px solid #8B5CF6;">
+      <div class="stat-icon" style="color: #8B5CF6;"><i class="pi pi-eye"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats().revision }}</span>
+        <span class="stat-label">En Revisión</span>
+      </div>
+    </div>
+    <div class="stat-card stat-done">
+      <div class="stat-icon"><i class="pi pi-check-circle"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats().finalizados }}</span>
+        <span class="stat-label">Finalizados</span>
+      </div>
+    </div>
+    <div class="stat-card stat-groups">
+      <div class="stat-icon"><i class="pi pi-users"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats().grupos }}</span>
+        <span class="stat-label">Mis Grupos</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MAIN GRID ────────────────────────────────────────── -->
+  <div class="main-grid">
+
+    <!-- Tabla de grupos -->
+    <p-card styleClass="dash-card" header="Grupos">
+      @if (groupsWithTickets().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-users"></i>
+        <p>No perteneces a ningún grupo.</p>
+      </div>
+      } @else {
+      <p-table [value]="groupsWithTickets()" [paginator]="true" [rows]="5" responsiveLayout="scroll"
+        styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Nombre</th>
+            <th class="text-center">Miembros</th>
+            <th class="text-center">Tickets</th>
+            <th class="text-center">Ver</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-group>
+          <tr>
+            <td>
+              <span class="group-name">{{ group.nombre }}</span>
+              @if (group.descripcion) {
+              <br><small class="group-desc">{{ group.descripcion }}</small>
+              }
+            </td>
+            <td class="text-center">
+              <p-tag [value]="(group.miembros?.length ?? 0).toString()" severity="secondary" />
+            </td>
+            <td class="text-center">
+              <p-tag [value]="group.totalTickets.toString()"
+                [severity]="group.totalTickets > 0 ? 'info' : 'secondary'" />
+            </td>
+            <td class="text-center">
+              <p-button icon="pi pi-eye" [rounded]="true" [text]="true" size="small"
+                (onClick)="viewGroup(group.id)" />
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4" class="text-center text-muted">Sin grupos</td>
+          </tr>
+        </ng-template>
+      </p-table>
+      }
     </p-card>
+
+    <!-- Gráfica de estadísticas -->
+    <p-card styleClass="dash-card" header="Distribución por Estado">
+      @if (userTickets().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-chart-pie"></i>
+        <p>No hay tickets para mostrar.</p>
+      </div>
+      } @else {
+      <div class="chart-container">
+        <p-chart type="doughnut" [data]="chartData" [options]="chartOptions" height="260px" />
+      </div>
+      }
+    </p-card>
+
+  </div>
+
+  <!-- ─── TICKETS TABLE ─────────────────────────────────────── -->
+  <p-card styleClass="dash-card mt-3" header="Mis Tickets Recientes">
+    @if (userTickets().length === 0) {
+    <div class="empty-state">
+      <i class="pi pi-ticket"></i>
+      <p>No tienes tickets asignados.</p>
+    </div>
+    } @else {
+    <p-table [value]="userTickets()" [paginator]="true" [rows]="8" responsiveLayout="scroll"
+      styleClass="p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Título</th>
+          <th>Estado</th>
+          <th>Prioridad</th>
+          <th>Asignado a</th>
+          <th>Fecha Límite</th>
+          <th class="text-center">Ver</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-ticket>
+        <tr class="ticket-row-hover">
+          <td><span class="ticket-title">{{ ticket.titulo }}</span></td>
+          <td>
+            <p-tag [value]="ticket.estado" [severity]="getEstadoSeverity(ticket.estado)" />
+          </td>
+          <td>
+            <p-tag [value]="ticket.prioridad" [severity]="getPrioridadSeverity(ticket.prioridad)" />
+          </td>
+          <td>{{ ticket.asignadoA || '—' }}</td>
+          <td>{{ ticket.fechaLimite ? (ticket.fechaLimite | date:'dd/MM/yyyy') : '—' }}</td>
+          <td class="text-center">
+            <p-button icon="pi pi-eye" [rounded]="true" [text]="true" size="small"
+              (onClick)="viewTicket(ticket.id)" />
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6" class="text-center text-muted">Sin tickets</td>
+        </tr>
+      </ng-template>
+    </p-table>
+    }
+  </p-card>
+
 </div>

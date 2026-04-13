@@ -30,23 +30,25 @@
                         requerido.</small>
                 </div>
                 <div class="col-12 md:col-6 flex flex-column gap-2">
-                    <label for="asignadoA">Asignar a *</label>
-                    <p-select id="asignadoA" [options]="assignableUsers" formControlName="asignadoA"
+                    <label for="asignadoId">Asignar a *</label>
+                    <p-select id="asignadoId" [options]="allUsers()" formControlName="asignadoId"
                         optionLabel="username" placeholder="Selecciona usuario"></p-select>
                     <small class="p-error"
-                        *ngIf="ticketForm.get('asignadoA')?.invalid && ticketForm.get('asignadoA')?.touched">Es
+                        *ngIf="ticketForm.get('asignadoId')?.invalid && ticketForm.get('asignadoId')?.touched">Es
                         requerido.</small>
                 </div>
             </div>
 
             <div class="grid">
                 <div class="col-12 md:col-6 flex flex-column gap-2">
-                    <label for="estado">Estado *</label>
-                    <p-select id="estado" [options]="estados" formControlName="estado"></p-select>
+                    <label for="estadoId">Estado *</label>
+                    <p-select id="estadoId" [options]="estados()" formControlName="estadoId"
+                        optionLabel="nombre" optionValue="id"></p-select>
                 </div>
                 <div class="col-12 md:col-6 flex flex-column gap-2">
-                    <label for="prioridad">Prioridad *</label>
-                    <p-select id="prioridad" [options]="prioridades" formControlName="prioridad"></p-select>
+                    <label for="prioridadId">Prioridad *</label>
+                    <p-select id="prioridadId" [options]="prioridades()" formControlName="prioridadId"
+                        optionLabel="nombre" optionValue="id"></p-select>
                 </div>
             </div>
 

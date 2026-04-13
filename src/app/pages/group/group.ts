@@ -82,7 +82,7 @@ export class GroupComponent implements OnInit {
   }
 
   openNew() {
-    this.groupItem = { nombre: '', categoria: '', nivel: '', autor: '', miembros: [] };
+    this.groupItem = { nombre: '', categoria: 'Tecnología', nivel: 'Principiante', autor: '', miembros: [] };
     this.submitted = false;
     this.groupDialog = true;
   }
@@ -102,8 +102,9 @@ export class GroupComponent implements OnInit {
       header: 'Confirmar Eliminación',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.groupService.deleteGroup(group.id);
-        this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Grupo eliminado correctamente', life: 3000 });
+        this.groupService.deleteGroup(group.id).subscribe(() => {
+          this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Grupo eliminado correctamente', life: 3000 });
+        });
       }
     });
   }
@@ -117,14 +118,18 @@ export class GroupComponent implements OnInit {
     this.submitted = true;
     if (this.groupItem.nombre?.trim()) {
       if (this.groupItem.id) {
-        this.groupService.updateGroup(this.groupItem as Group);
-        this.messageService.add({ severity: 'success', summary: 'Actualizado', detail: 'Grupo modificado correctamente', life: 3000 });
+        this.groupService.updateGroup(this.groupItem as Group).subscribe(() => {
+          this.messageService.add({ severity: 'success', summary: 'Actualizado', detail: 'Grupo modificado correctamente', life: 3000 });
+          this.groupDialog = false;
+          this.groupItem = {};
+        });
       } else {
-        this.groupService.createGroup(this.groupItem);
-        this.messageService.add({ severity: 'success', summary: 'Creado', detail: 'Grupo añadido correctamente', life: 3000 });
+        this.groupService.createGroup(this.groupItem).subscribe(() => {
+          this.messageService.add({ severity: 'success', summary: 'Creado', detail: 'Grupo añadido correctamente', life: 3000 });
+          this.groupDialog = false;
+          this.groupItem = {};
+        });
       }
-      this.groupDialog = false;
-      this.groupItem = {};
     } else {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'El nombre es obligatorio', life: 3000 });
     }

@@ -37,7 +37,7 @@ export default async function membersRoutes(fastify) {
     const { grupoId, usuarioId } = request.params;
     const permisos = request.jwtUser.permisos || [];
 
-    if (!permisos.includes('groups:manage')) {
+    if (!permisos.includes('groups:member-add')) {
       res.code(403);
       return replyError(403, 'SxGP403', 'Sin permiso para agregar miembros');
     }
@@ -55,7 +55,7 @@ export default async function membersRoutes(fastify) {
     const callerId = request.jwtUser.sub;
     const permisos = request.jwtUser.permisos || [];
 
-    if (callerId !== usuarioId && !permisos.includes('groups:manage')) {
+    if (callerId !== usuarioId && !permisos.includes('groups:member-delete')) {
       res.code(403);
       return replyError(403, 'SxGP403', 'Sin permiso para eliminar miembros');
     }
@@ -87,7 +87,7 @@ export default async function membersRoutes(fastify) {
     const { permiso_ids } = request.body;
     const permisos = request.jwtUser.permisos || [];
 
-    if (!permisos.includes('groups:manage')) {
+    if (!permisos.includes('users:manage')) {
       res.code(403);
       return replyError(403, 'SxGP403', 'Sin permiso para gestionar permisos de grupo');
     }

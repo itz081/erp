@@ -1,65 +1,251 @@
-.section-header {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--p-text-color);
+.profile-wrapper {
+  padding: 1rem 1.25rem 2rem;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
-/* Cabecera del perfil */
+/* ─── Avatar circle ─────────────────────────────── */
+.avatar-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--p-primary-color), #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+}
+
+.avatar-initials {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Hero ───────────────────────────────────────── */
 .profile-hero {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    padding: 0.5rem 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
 }
 
 .profile-hero-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .profile-full-name {
-    font-size: 1.4rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--p-text-color);
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--p-text-color);
 }
 
 .profile-username {
-    font-size: 0.95rem;
-    color: var(--p-text-muted-color);
+  font-size: 0.9rem;
+  color: var(--p-text-muted-color);
 }
 
-/* Grid de datos */
+.hero-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.15rem;
+}
+
+/* ─── Data grid ──────────────────────────────────── */
 .profile-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
-    padding: 0.5rem 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  padding: 0.25rem 0;
 }
 
 .profile-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 
 .field-label {
-    font-size: 0.78rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--p-text-muted-color);
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--p-text-muted-color);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .field-value {
-    font-size: 1rem;
-    color: var(--p-text-color);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  font-size: 0.98rem;
+  color: var(--p-text-color);
+}
+
+.field-value.mono {
+  font-family: monospace;
+  font-size: 0.8rem;
+  word-break: break-all;
+  color: var(--p-text-muted-color);
+}
+
+.field-error {
+  color: var(--p-red-500);
+  font-size: 0.78rem;
+  margin-top: 0.2rem;
+}
+
+/* ─── Edit form ──────────────────────────────────── */
+.edit-form {
+  padding-top: 0.5rem;
+}
+
+/* ─── Groups grid ────────────────────────────────── */
+.groups-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.group-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: var(--p-surface-50, #f8f9fa);
+  border: 1px solid var(--p-surface-200, #e9ecef);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.group-chip:hover {
+  background: var(--p-primary-50, #ede9fe);
+  border-color: var(--p-primary-200, #c4b5fd);
+  transform: translateX(4px);
+}
+
+.chip-icon {
+  color: var(--p-primary-color);
+  font-size: 1rem;
+}
+
+.chip-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--p-text-color);
+  flex: 1;
+}
+
+.chip-desc {
+  font-size: 0.8rem;
+  color: var(--p-text-muted-color);
+  flex: 2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip-arrow {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+  margin-left: auto;
+}
+
+/* ─── Tickets list ───────────────────────────────── */
+.tickets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ticket-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  background: var(--p-surface-50, #f8f9fa);
+  border: 1px solid var(--p-surface-200, #e9ecef);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.ticket-row:hover {
+  background: var(--p-primary-50, #ede9fe);
+  border-color: var(--p-primary-200, #c4b5fd);
+  transform: translateX(4px);
+}
+
+.ticket-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+}
+
+.ticket-title {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--p-text-color);
+}
+
+.ticket-meta {
+  font-size: 0.78rem;
+  color: var(--p-text-muted-color);
+}
+
+.ticket-date {
+  font-size: 0.8rem;
+  color: var(--p-text-muted-color);
+  white-space: nowrap;
+}
+
+.ticket-arrow {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+}
+
+.tickets-more {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--p-primary-color);
+  padding: 0.5rem;
+  font-weight: 500;
+}
+
+/* ─── Empty state ────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--p-text-muted-color);
+}
+
+.empty-icon {
+  font-size: 2rem;
+  opacity: 0.4;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* ─── Cards spacing ──────────────────────────────── */
+.info-card {
+  margin-top: 1rem;
+}
+
+@media (max-width: 600px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
 }
