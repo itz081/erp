@@ -144,9 +144,16 @@ export class UserManagementComponent {
             return;
         }
 
-        this.userService.saveProfile(this.newUser as UserProfile);
-        this.messageService.add({severity: 'success', summary: 'Éxito', detail: 'Usuario creado correctamente'});
-        this.displayAddDialog = false;
+        this.userService.register(this.newUser as UserProfile).subscribe({
+            next: () => {
+                this.messageService.add({severity: 'success', summary: 'Éxito', detail: 'Usuario creado correctamente'});
+                this.userService.loadUsers().subscribe();
+                this.displayAddDialog = false;
+            },
+            error: (err) => {
+                this.messageService.add({severity: 'error', summary: 'Error', detail: err.error?.error || 'No se pudo crear el usuario'});
+            }
+        });
     }
 
     getPermisoSeverity(permiso: PermisoBase) {

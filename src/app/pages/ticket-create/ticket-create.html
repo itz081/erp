@@ -31,7 +31,7 @@
                 </div>
                 <div class="col-12 md:col-6 flex flex-column gap-2">
                     <label for="asignadoId">Asignar a *</label>
-                    <p-select id="asignadoId" [options]="allUsers()" formControlName="asignadoId"
+                    <p-select id="asignadoId" [options]="filteredUsers()" formControlName="asignadoId"
                         optionLabel="username" placeholder="Selecciona usuario"></p-select>
                     <small class="p-error"
                         *ngIf="ticketForm.get('asignadoId')?.invalid && ticketForm.get('asignadoId')?.touched">Es

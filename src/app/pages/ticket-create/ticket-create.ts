@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -39,6 +39,8 @@ export class TicketCreateComponent implements OnInit {
 
     allUsers = computed(() => this.userService.getUsers()());
 
+    filteredUsers = signal<any[]>([]);
+
     ngOnInit() {
         // Verificar permisos
         const user = this.userService.getCurrentUser()();
@@ -67,11 +69,21 @@ export class TicketCreateComponent implements OnInit {
             if (media) this.ticketForm.patchValue({ prioridadId: media.id });
         });
 
-        // Al cambiar de grupo, opcionalmente podríamos filtrar, 
-        // pero el usuario pidió ver TODOS los usuarios de la base de datos.
+        // Al cambiar de grupo, filtrar los usuarios para mostrar solo miembros del grupo
         this.ticketForm.get('groupId')?.valueChanges.subscribe(groupId => {
-            if (!this.ticketForm.get('asignadoId')?.value && this.allUsers().length > 0) {
-                 this.ticketForm.patchValue({ asignadoId: this.allUsers()[0] });
+            if (groupId) {
+                this.groupService.loadGroupById(groupId).subscribe(group => {
+                    const miembros = group?.miembros || [];
+                    this.filteredUsers.set(miembros);
+                    
+                    // Si el usuario asignado actualmente no está en el nuevo grupo, resetearlo
+                    const currentAsig = this.ticketForm.get('asignadoId')?.value;
+                    if (currentAsig && !miembros.find((m: any) => m.id === currentAsig.id)) {
+                        this.ticketForm.patchValue({ asignadoId: null });
+                    }
+                });
+            } else {
+                this.filteredUsers.set([]);
             }
         });
 
