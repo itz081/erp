@@ -123,7 +123,7 @@ export default async function authRoutes(fastify) {
           email: user.email,
           permisos: permsData.rows.map((p) => p.nombre),
         },
-        process.env.JWT_SECRET || 'ana_secret',
+       process.env.JWT_SECRET || 'seguridad_jwt_secret_super_seguro' , 
         { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
       );
 
@@ -144,7 +144,7 @@ export default async function authRoutes(fastify) {
       try {
         request.jwtUser = jwt.verify(
           auth.split(' ')[1],
-          process.env.JWT_SECRET || 'ana_secret'
+          process.env.JWT_SECRET || 'seguridad_jwt_secret_super_seguro'
         );
       } catch {
         res.code(401).send(replyError(401, 'SxUS401', 'Token inválido'));

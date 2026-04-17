@@ -1,9 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [],
+  imports: [ButtonModule],
   templateUrl: './landing.html',
 })
-export class LandingPage { }
+export class LandingPage {
+    router = inject(Router);
+}

@@ -84,7 +84,7 @@ export class TicketService {
                 },
                 error: () => {
                     this.loadingTickets = false;
-                    this.hasAttemptedLoad = true; // Evitar re-intentos infinitos ante errores 429 persistentes
+                    this.hasAttemptedLoad = true; 
                 }
             });
         }

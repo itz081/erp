@@ -1,47 +1,94 @@
-<p-toast></p-toast>
-<p-confirmDialog></p-confirmDialog>
+<p-toast />
+<p-confirmDialog />
 
-<p-toolbar class="mb-4">
-    <div class="p-toolbar-group-start">
-        <h2>Listado de Tickets</h2>
+<div class="flex flex-column gap-5">
+    <!-- Header Section -->
+    <div class="flex flex-column md:flex-row md:align-items-center justify-content-between gap-3 bg-white p-4 border-round-2xl shadow-1">
+        <div class="flex align-items-center gap-3">
+            <div class="w-3rem h-3rem border-circle bg-primary-faded flex align-items-center justify-content-center">
+                <i class="pi pi-ticket text-primary text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold m-0 text-900">Buzón de Tickets</h1>
+                <p class="text-600 m-0">Administra y da seguimiento a todas las solicitudes.</p>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <p-button label="Crear Nuevo Ticket" icon="pi pi-plus" [rounded]="true" (onClick)="createTicket()" *ngIf="canAdd()" />
+        </div>
     </div>
-    <div class="p-toolbar-group-end gap-2" *ngIf="canAdd()">
-        <p-button label="Crear Nuevo Ticket" icon="pi pi-plus" severity="success" (onClick)="createTicket()"></p-button>
-    </div>
-</p-toolbar>
 
-<p-card>
-    <p-table [value]="allTickets()" [paginator]="true" [rows]="10" responsiveLayout="scroll"
-        [globalFilterFields]="['titulo', 'estado', 'prioridad']">
-        <ng-template pTemplate="header">
-            <tr>
-                <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
-                <th pSortableColumn="titulo">Título <p-sortIcon field="titulo"></p-sortIcon></th>
-                <th pSortableColumn="estado">Estado <p-sortIcon field="estado"></p-sortIcon></th>
-                <th pSortableColumn="prioridad">Prioridad <p-sortIcon field="prioridad"></p-sortIcon></th>
-                <th pSortableColumn="fechaLimite">Fecha Límite <p-sortIcon field="fechaLimite"></p-sortIcon></th>
-                <th>Acciones</th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-ticket>
-            <tr>
-                <td>{{ticket.id}}</td>
-                <td>{{ticket.titulo}}</td>
-                <td>{{ticket.estado}}</td>
-                <td>{{ticket.prioridad}}</td>
-                <td>{{ticket.fechaLimite | date}}</td>
-                <td>
-                    <p-button icon="pi pi-eye" [text]="true" [rounded]="true" severity="info"
-                        (onClick)="viewTicket(ticket.id)"></p-button>
-                    <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger"
-                        (onClick)="deleteTicket(ticket.id)" *ngIf="canDelete()"></p-button>
-                </td>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-            <tr>
-                <td colspan="6">No hay tickets registrados.</td>
-            </tr>
-        </ng-template>
-    </p-table>
-</p-card>
+    <!-- Table Section -->
+    <p-card styleClass="shadow-2 border-round-2xl overflow-hidden">
+        <p-table #dt [value]="allTickets()" [paginator]="true" [rows]="10" responsiveLayout="stack" breakpoint="960px"
+            [globalFilterFields]="['titulo', 'estado', 'prioridad', 'asignadoA']"
+            styleClass="p-datatable-striped p-datatable-sm"
+            [rowHover]="true">
+            
+            <ng-template pTemplate="header">
+                <tr class="surface-ground">
+                    <th pSortableColumn="id" class="pl-4">Ref <p-sortIcon field="id" /></th>
+                    <th pSortableColumn="titulo">Asunto <p-sortIcon field="titulo" /></th>
+                    <th pSortableColumn="estado">Estado <p-sortIcon field="estado" /></th>
+                    <th pSortableColumn="prioridad">Prioridad <p-sortIcon field="prioridad" /></th>
+                    <th pSortableColumn="asignadoA">Asignado <p-sortIcon field="asignadoA" /></th>
+                    <th pSortableColumn="fechaLimite">Vencimiento <p-sortIcon field="fechaLimite" /></th>
+                    <th class="text-center pr-4">Acciones</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-ticket>
+                <tr class="hover:surface-50 transition-colors transition-duration-150">
+                    <td class="pl-4"><span class="text-500 font-bold">#{{ticket.id}}</span></td>
+                    <td>
+                        <div class="flex flex-column">
+                            <span class="font-bold text-900">{{ticket.titulo}}</span>
+                            <span class="text-xs text-500">{{ticket.grupoNombre || 'General'}}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <p-tag [value]="ticket.estado" [severity]="getEstadoSeverity(ticket.estado)" [rounded]="true" />
+                    </td>
+                    <td>
+                        <div class="flex align-items-center gap-2">
+                             <div class="w-1rem h-1rem border-circle" [class]="getPriorityColor(ticket.prioridad)"></div>
+                             <span class="text-900 font-medium">{{ticket.prioridad}}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="flex align-items-center gap-2" *ngIf="ticket.asignadoA; else unassigned">
+                            <p-avatar [label]="ticket.asignadoA.charAt(0).toUpperCase()" shape="circle" styleClass="bg-primary-faded text-primary font-bold" />
+                            <span class="text-700">{{ticket.asignadoA}}</span>
+                        </div>
+                        <ng-template #unassigned>
+                            <span class="text-400 italic">Sin asignar</span>
+                        </ng-template>
+                    </td>
+                    <td>
+                        <span [class]="isOverdue(ticket.fechaLimite) ? 'text-red-500 font-bold' : 'text-700'">
+                            {{ticket.fechaLimite ? (ticket.fechaLimite | date:'mediumDate') : 'Indefinido'}}
+                        </span>
+                    </td>
+                    <td class="text-center pr-4">
+                        <div class="flex justify-content-center gap-2">
+                            <p-button icon="pi pi-eye" [rounded]="true" [text]="true" severity="info" pTooltip="Ver detalle" tooltipPosition="left" (onClick)="viewTicket(ticket.id)" />
+                            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" pTooltip="Eliminar" tooltipPosition="left" (onClick)="deleteTicket(ticket.id)" *ngIf="canDelete()" />
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="7" class="text-center py-8">
+                        <div class="flex flex-column align-items-center gap-3">
+                            <i class="pi pi-inbox text-6xl text-200"></i>
+                            <span class="text-900 font-medium text-xl">No hay tickets que mostrar</span>
+                            <p-button label="Crear mi primer ticket" icon="pi pi-plus" [text]="true" (onClick)="createTicket()" *ngIf="canAdd()" />
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-card>
+</div>

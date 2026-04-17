@@ -19,10 +19,14 @@ import { TicketService } from '../../services/ticket.service';
 import { GroupService } from '../../services/group.service';
 import { UserService } from '../../services/user.service';
 
+import { AvatarModule } from 'primeng/avatar';
+import { TagModule } from 'primeng/tag';
+import { DividerModule } from 'primeng/divider';
+
 @Component({
     selector: 'app-ticket-detail',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, FormsModule, CardModule, FieldsetModule, InputTextModule, TextareaModule, SelectModule, DatePickerModule, ButtonModule, TimelineModule, TableModule, ToolbarModule, ToastModule, ConfirmDialogModule],
+    imports: [CommonModule, ReactiveFormsModule, FormsModule, CardModule, FieldsetModule, InputTextModule, TextareaModule, SelectModule, DatePickerModule, ButtonModule, TimelineModule, TableModule, ToolbarModule, ToastModule, ConfirmDialogModule, AvatarModule, TagModule, DividerModule],
     providers: [MessageService, ConfirmationService],
     templateUrl: './ticket-detail.html',
     styles: []
@@ -173,5 +177,14 @@ export class TicketDetailComponent implements OnInit {
                 });
             }
         });
+    }
+
+    getEstadoSeverity(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
+        const s = estado?.toLowerCase() || '';
+        if (s.includes('final') || s.includes('terminado')) return 'success';
+        if (s.includes('progreso') || s.includes('curso')) return 'info';
+        if (s.includes('revision') || s.includes('revisión')) return 'warn';
+        if (s.includes('pendiente')) return 'secondary';
+        return 'contrast';
     }
 }

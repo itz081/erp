@@ -24,9 +24,6 @@ async function forceAdmin() {
 
     const permIds = permRows.map(p => p.id);
 
-    // Actualiza a TODOS los usuarios temporalmente para asegurarse de que el usuario recupere el acceso.
-    // O puedes cambiar la query para que actualice a un usuario en especifico si sabes su email.
-    // Lo aplicaremos al usuario con ID proporcionado en el error
     const targetUserId = 'e16e44f5-3789-4cd6-898c-342046c37055';
     
     await pool.query('UPDATE usuarios SET permisos_globales = $1 WHERE id = $2', [permIds, targetUserId]);

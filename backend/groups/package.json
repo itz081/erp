@@ -1,5 +1,5 @@
 {
-  "name": "ana-groups-service",
+  "name": "itzel-groups-service",
   "version": "1.0.0",
   "type": "module",
   "main": "src/index.js",

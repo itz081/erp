@@ -1,11 +1,11 @@
-<div class="layout-wrapper">
-    <!-- Menú lateral -->
-    <aside class="layout-sidebar">
-        <app-sidebar />
-    </aside>
+<div class="layout-wrapper flex flex-column min-h-screen" style="background-color: var(--p-content-background);">
+    <!-- Header / Navbar -->
+    <app-header />
 
     <!-- Contenido principal -->
-    <main class="layout-main">
-        <router-outlet />
+    <main class="flex-grow-1 p-3 md:p-5">
+        <div class="mx-auto" style="max-width: 1400px;">
+            <router-outlet />
+        </div>
     </main>
 </div>

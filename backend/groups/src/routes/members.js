@@ -11,7 +11,7 @@ async function verifyToken(request, res) {
   try {
     request.jwtUser = jwt.verify(
       auth.split(' ')[1],
-      process.env.JWT_SECRET || 'ana_secret'
+      process.env.JWT_SECRET || 'seguridad_jwt_secret_super_seguro'
     );
   } catch {
     res.code(401).send(replyError(401, 'SxGP401', 'Token inválido'));

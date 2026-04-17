@@ -20,7 +20,7 @@ const SERVICES = {
   groups: `http://localhost:${process.env.PORT_GROUPS || 3003}`,
 };
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ana_secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'seguridad_jwt_secret_super_seguro';
 
 await app.register(cors, {
   origin: (origin, cb) => cb(null, true),

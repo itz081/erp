@@ -9,9 +9,12 @@ import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
 import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
+import { DragDropModule } from 'primeng/dragdrop';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { AvatarModule } from 'primeng/avatar';
+import { DividerModule } from 'primeng/divider';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { DragDropModule } from 'primeng/dragdrop';
 
 import { TicketService } from '../../services/ticket.service';
 import { GroupService } from '../../services/group.service';
@@ -32,7 +35,10 @@ import { Ticket } from '../../models/ticket.model';
     TooltipModule,
     TagModule,
     ToastModule,
-    DragDropModule
+    DragDropModule,
+    SelectButtonModule,
+    AvatarModule,
+    DividerModule
   ],
   providers: [MessageService],
   templateUrl: './group-view.html',
@@ -58,6 +64,12 @@ export class GroupViewComponent implements OnInit {
 
   previewTicket: Ticket | null = null;
   displayPreview = false;
+
+  viewMode = 'list';
+  viewOptions = [
+    { icon: 'pi pi-list', value: 'list' },
+    { icon: 'pi pi-th-large', value: 'kanban' }
+  ];
 
   ngOnInit() {
     this.route.params.subscribe(params => {
@@ -101,22 +113,26 @@ export class GroupViewComponent implements OnInit {
   createTicketInGroup() {
     this.router.navigate(['/home/tickets/create'], { queryParams: { groupId: this.groupId() } });
   }
-
-  // --- Drag & Drop Lógica ---
   
   dragStart(ticket: any) {
-    const user = this.userService.getCurrentUser()();
+    const user: any = this.userService.getCurrentUser()();
     const isAdmin = user?.permisoBase === 'admin';
-    const isAsignado = ticket.asignadoId === user?.id;
+    const isAsignado = ticket.asignadoId === user?.id || ticket.asignadoA === user?.username;
 
-    if (isAdmin || isAsignado) {
+    const groupPerms = user?.groupPermissions;
+    const ticketPerms = user?.ticketPermissions;
+    const hasAllGroupPerms = groupPerms?.canAdd && groupPerms?.canEdit && groupPerms?.canDelete && groupPerms?.canComment && groupPerms?.canAddMember && groupPerms?.canDeleteMember;
+    const hasAllTicketPerms = ticketPerms?.canAdd && ticketPerms?.canEdit && ticketPerms?.canDelete;
+    const hasAllPerms = hasAllGroupPerms && hasAllTicketPerms;
+
+    if (isAdmin || isAsignado || hasAllPerms) {
       this.draggedTicket = ticket;
     } else {
       this.draggedTicket = null;
       this.messageService.add({
         severity: 'error',
         summary: 'Acceso Denegado',
-        detail: 'Solo el usuario asignado puede mover este ticket.'
+        detail: 'Solo el usuario asignado o alguien con todos los permisos puede mover este ticket.'
       });
     }
   }
@@ -152,5 +168,12 @@ export class GroupViewComponent implements OnInit {
     if (p.includes('ALTA')) return 'danger';
     if (p.includes('MEDIA')) return 'warning';
     return 'info';
+  }
+
+  getPriorityHex(prioridad: string): string {
+    const p = prioridad?.toUpperCase() || '';
+    if (p.includes('ALTA')) return '#ef4444';
+    if (p.includes('MEDIA')) return '#f59e0b';
+    return '#3b82f6';
   }
 }

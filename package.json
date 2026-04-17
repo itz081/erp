@@ -1,5 +1,5 @@
 {
-  "name": "ana-isabel-bahena-sanchez-angular",
+  "name": "itzel-XD-angular",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:Ana_Isabel_Bahena_Sanchez-angular": "node dist/Ana_Isabel_Bahena_Sanchez-angular/server/server.mjs"
+    "serve:ssr:itzel-XD-angular": "node dist/itzel-XD-angular/server/server.mjs"
   },
   "prettier": {
     "printWidth": 100,

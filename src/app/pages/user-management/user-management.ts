@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UserService, UserProfile, PermisoBase } from '../../services/user.service';
 import { TableModule } from 'primeng/table';
@@ -13,6 +13,9 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { AvatarModule } from 'primeng/avatar';
+import { TooltipModule } from 'primeng/tooltip';
+import { DividerModule } from 'primeng/divider';
 
 @Component({
     selector: 'app-user-management',
@@ -29,7 +32,10 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
         CheckboxModule,
         DialogModule,
         InputTextModule,
-        ConfirmDialogModule
+        ConfirmDialogModule,
+        AvatarModule,
+        TooltipModule,
+        DividerModule
     ],
     providers: [MessageService, ConfirmationService],
     templateUrl: './user-management.html'
@@ -39,18 +45,17 @@ export class UserManagementComponent {
     private messageService = inject(MessageService);
     private confirmationService = inject(ConfirmationService);
 
-    // Filter out the current logged-in user from the list
     users = computed(() => {
         const currentUser = this.userService.getCurrentUser()();
         return this.userService.getUsers()().filter(u => u.email !== currentUser?.email);
     });
     
-    permisosBaseLista: { label: string, value: PermisoBase }[] = [
-        { label: 'Administrador', value: 'admin' },
-        { label: 'User', value: 'user' }
-    ];
-
     displayAddDialog = false;
+    displayGroupPerms = false;
+    displayTicketPerms = false;
+    
+    selectedUser: UserProfile | null = null;
+
     newUser: Partial<UserProfile> = {
         permisoBase: 'user',
         groupPermissions: {
@@ -68,24 +73,36 @@ export class UserManagementComponent {
         }
     };
 
-    onPermisoChange(user: UserProfile, event: any) {
-        const newPermiso: PermisoBase = event.value;
-        this.userService.updateUserPermisoBase(user.email, newPermiso);
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Permiso base actualizado',
-            detail: `El usuario ${user.fullName} ahora es ${newPermiso === 'admin' ? 'Administrador' : 'User'}`
-        });
+    openGroupPerms(user: UserProfile) {
+        // Deep clone to avoid immediate binding while editing
+        this.selectedUser = JSON.parse(JSON.stringify(user));
+        this.displayGroupPerms = true;
     }
 
-    onPermissionChange(user: UserProfile) {
-        if (user.groupPermissions && user.ticketPermissions) {
-            this.userService.updateUserPermissions(user.email, user.groupPermissions, user.ticketPermissions);
+    openTicketPerms(user: UserProfile) {
+        this.selectedUser = JSON.parse(JSON.stringify(user));
+        this.displayTicketPerms = true;
+    }
+
+    savePermissions() {
+        if (this.selectedUser) {
+            this.userService.updateUserPermissions(
+                this.selectedUser.email, 
+                this.selectedUser.groupPermissions!, 
+                this.selectedUser.ticketPermissions!
+            );
+            // After saving to DB, we should refresh or rely on the service state
+            // For now, the service updates local state too
             this.messageService.add({
-                severity: 'success',
-                summary: 'Permisos actualizados',
-                detail: `Permisos de ${user.fullName} guardados correctamente.`
+                severity: 'success', 
+                summary: 'Éxito', 
+                detail: `Permisos de ${this.selectedUser.fullName} actualizados.`
             });
+            this.displayGroupPerms = false;
+            this.displayTicketPerms = false;
+            
+            // Re-load users to ensure UI is in sync
+            this.userService.loadUsers().subscribe();
         }
     }
 
@@ -154,9 +171,5 @@ export class UserManagementComponent {
                 this.messageService.add({severity: 'error', summary: 'Error', detail: err.error?.error || 'No se pudo crear el usuario'});
             }
         });
-    }
-
-    getPermisoSeverity(permiso: PermisoBase) {
-        return permiso === 'admin' ? 'success' : 'info';
     }
 }

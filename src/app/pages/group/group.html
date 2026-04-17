@@ -1,98 +1,112 @@
 <p-toast />
 <p-confirmDialog />
 
-<h2 class="section-header">Gestión de Grupos</h2>
+<div class="flex flex-column gap-4">
+    <div class="flex flex-column md:flex-row md:align-items-center justify-content-between gap-3">
+        <div>
+            <h1 class="text-3xl font-bold m-0 text-900">Grupos de Trabajo</h1>
+            <p class="text-600 mt-2">Gestiona y organiza tus equipos y sus áreas de especialidad.</p>
+        </div>
+        <div class="flex gap-2">
+            <p-button label="Nuevo Grupo" icon="pi pi-plus" [rounded]="true" (onClick)="openNew()" *ngIf="canAdd()" />
+        </div>
+    </div>
 
-<p-divider />
-
-<p-card styleClass="group-card">
-    <p-toolbar styleClass="mb-4 gap-2">
-        <ng-template pTemplate="left">
-            <p-button severity="success" label="Nuevo Grupo" icon="pi pi-plus" (onClick)="openNew()" *ngIf="canAdd()" />
+    <p-dataView #dv [value]="groups()" [rows]="6" [paginator]="true" layout="grid">
+        <ng-template #header>
+            <div class="flex justify-content-end gap-2">
+                <span class="p-input-icon-left w-full md:w-auto">
+                    <i class="pi pi-search"></i>
+                    <input pInputText type="text" placeholder="Buscar grupos..." class="w-full" />
+                </span>
+            </div>
         </ng-template>
-        <ng-template pTemplate="right">
-            <p-tag [value]="'Total de Grupos: ' + N_get()" severity="info" />
+
+        <ng-template #grid let-items>
+            <div class="grid grid-nogutter">
+                <div class="col-12 sm:col-6 lg:col-4 p-2" *ngFor="let group of items">
+                    <div class="p-4 border-1 border-round-2xl surface-border bg-card shadow-2 hover:shadow-5 transition-all transition-duration-300 flex flex-column h-full">
+                        <div class="flex align-items-center justify-content-between mb-3">
+                            <p-tag [value]="group.categoria || 'Sin categoría'" severity="info" [rounded]="true" />
+                            <div class="flex gap-1">
+                                <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" size="small" (onClick)="editGroup(group)" *ngIf="canEdit()" />
+                                <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" size="small" (onClick)="deleteGroup(group)" *ngIf="canDelete()" />
+                            </div>
+                        </div>
+
+                        <div class="flex flex-column align-items-center text-center mb-4">
+                            <div class="w-4rem h-4rem border-circle bg-primary-faded flex align-items-center justify-content-center mb-3">
+                                <i class="pi pi-users text-primary text-3xl"></i>
+                            </div>
+                            <span class="text-xl font-bold text-900 mb-1">{{ group.nombre }}</span>
+                            <span class="text-600 text-sm">{{ group.descripcion || 'Sin descripción disponible' }}</span>
+                        </div>
+
+                        <p-divider />
+
+                        <div class="flex align-items-center justify-content-between mt-auto pt-3">
+                            <div class="flex flex-column gap-1">
+                                <span class="text-xs text-500 uppercase font-bold">Membresía</span>
+                                <span class="text-900 font-medium">{{ group.totalMiembros || 0 }} Usuarios</span>
+                            </div>
+                            <div class="flex flex-column align-items-end gap-1">
+                                <span class="text-xs text-500 uppercase font-bold">Nivel</span>
+                                <p-tag [value]="group.nivel || 'N/A'" severity="secondary" />
+                            </div>
+                        </div>
+
+                        <p-button label="Ver Detalles" icon="pi pi-arrow-right" iconPos="right" [rounded]="true" styleClass="w-full mt-4" (onClick)="viewGroup(group)" />
+                    </div>
+                </div>
+            </div>
         </ng-template>
-    </p-toolbar>
 
-    <p-table #dt [value]="groups()" [rows]="10" [paginator]="true"
-        [globalFilterFields]="['nombre', 'categoria', 'nivel', 'autor']" [tableStyle]="{'min-width': '50rem'}"
-        [rowHover]="true" dataKey="id">
-        <ng-template pTemplate="header">
-            <tr>
-                <th pSortableColumn="id">ID <p-sortIcon field="id" /></th>
-                <th pSortableColumn="nombre">Nombre <p-sortIcon field="nombre" /></th>
-                <th pSortableColumn="categoria">Categoría <p-sortIcon field="categoria" /></th>
-                <th pSortableColumn="nivel">Nivel <p-sortIcon field="nivel" /></th>
-                <th pSortableColumn="autor">Autor <p-sortIcon field="autor" /></th>
-
-                <th>Miembros</th>
-                <th>Tickets</th>
-                <th>Acciones</th>
-            </tr>
+        <ng-template #empty>
+            <div class="flex flex-column align-items-center justify-content-center py-8 surface-section border-round-2xl">
+                <i class="pi pi-folder-open text-6xl text-300 mb-4"></i>
+                <span class="text-900 font-bold text-2xl">No se encontraron grupos</span>
+                <p class="text-600">Comienza creando uno nuevo para tu equipo.</p>
+                <p-button label="Crear primer grupo" icon="pi pi-plus" [rounded]="true" class="mt-4" (onClick)="openNew()" *ngIf="canAdd()" />
+            </div>
         </ng-template>
-        <ng-template pTemplate="body" let-group let-i="rowIndex">
-            <tr>
-                <td>{{i + 1}}</td>
-                <td>{{group.nombre}}</td>
-                <td>{{group.categoria || 'N/A'}}</td>
-                <td>{{group.nivel || 'N/A'}}</td>
-                <td>{{group.autor || 'N/A'}}</td>
+    </p-dataView>
+</div>
 
-                <td>{{group.miembros.length}}</td>
-                <td>{{group.tickets.length}}</td>
-                <td>
-                    <p-button icon="pi pi-eye" class="mr-2" rounded="true" text="true" severity="primary"
-                        (onClick)="viewGroup(group)" pTooltip="Ver Detalles" />
-                    <p-button icon="pi pi-pencil" class="mr-2" rounded="true" text="true" severity="info"
-                        (onClick)="editGroup(group)" *ngIf="canEdit()" pTooltip="Editar" />
-                    <p-button icon="pi pi-trash" severity="danger" rounded="true" text="true"
-                        (onClick)="deleteGroup(group)" *ngIf="canDelete()" pTooltip="Eliminar" />
-                </td>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-            <tr>
-                <td colspan="8">No hay grupos registrados.</td>
-            </tr>
-        </ng-template>
-    </p-table>
-</p-card>
-
-<!-- Diálogo de Creación / Edición -->
-<p-dialog [(visible)]="groupDialog" [style]="{width: '450px'}" header="Detalles del Grupo" [modal]="true"
-    styleClass="p-fluid">
-    <ng-template pTemplate="content">
-
-        <div class="field mb-4">
-            <label for="nombre">Nombre</label>
-            <input type="text" pInputText id="nombre" [(ngModel)]="groupItem.nombre" required autofocus />
-            <small class="p-error" *ngIf="submitted && !groupItem.nombre">El Nombre es requerido.</small>
+<!-- Diálogo Moderno -->
+<p-dialog [(visible)]="groupDialog" [style]="{width: '500px'}" header="Detalles del Grupo" [modal]="true" [draggable]="false" [resizable]="false" styleClass="p-fluid border-round-2xl overflow-hidden">
+    <div class="flex flex-column gap-4 py-3">
+        <div class="flex flex-column gap-2">
+            <label for="nombre" class="font-bold text-900">Nombre del Grupo</label>
+            <input type="text" pInputText id="nombre" [(ngModel)]="groupItem.nombre" placeholder="Ej. Equipo de Seguridad" />
+            <small class="text-red-500" *ngIf="submitted && !groupItem.nombre">El nombre es obligatorio.</small>
         </div>
 
-
-
-        <div class="field mb-4">
-            <label for="categoria">Categoría</label>
-            <p-select id="categoria" [options]="categoryOptions" optionLabel="label" optionValue="value" [(ngModel)]="groupItem.categoria" placeholder="Seleccione Categoría"
-                appendTo="body"></p-select>
+        <div class="grid">
+            <div class="col-6 flex flex-column gap-2">
+                <label for="categoria" class="font-bold text-900">Categoría</label>
+                <p-select [options]="categoryOptions" optionLabel="label" optionValue="value" [(ngModel)]="groupItem.categoria" placeholder="Seleccionar" appendTo="body" />
+            </div>
+            <div class="col-6 flex flex-column gap-2">
+                <label for="nivel" class="font-bold text-900">Nivel</label>
+                <p-select [options]="levelOptions" optionLabel="label" optionValue="value" [(ngModel)]="groupItem.nivel" placeholder="Seleccionar" appendTo="body" />
+            </div>
         </div>
 
-        <div class="field mb-4">
-            <label for="nivel">Nivel</label>
-            <p-select id="nivel" [options]="levelOptions" optionLabel="label" optionValue="value" [(ngModel)]="groupItem.nivel" placeholder="Seleccione Nivel"
-                appendTo="body"></p-select>
+        <div class="flex flex-column gap-2">
+            <label for="autor" class="font-bold text-900">Autor / Responsable</label>
+            <input type="text" pInputText id="autor" [(ngModel)]="groupItem.autor" placeholder="Nombre completo" />
         </div>
-
-        <div class="field mb-4">
-            <label for="autor">Autor</label>
-            <input type="text" pInputText id="autor" [(ngModel)]="groupItem.autor" placeholder="Nombre del autor (opcional)" />
+        
+        <div class="flex flex-column gap-2">
+            <label for="descripcion" class="font-bold text-900">Descripción</label>
+            <textarea id="descripcion" pInputTextarea [(ngModel)]="groupItem.descripcion" rows="3" placeholder="Describe brevemente el propósito de este grupo..."></textarea>
         </div>
+    </div>
 
-    </ng-template>
-
-    <ng-template pTemplate="footer">
-        <p-button label="Cancelar" icon="pi pi-times" text="true" (onClick)="hideDialog()" />
-        <p-button label="Guardar" icon="pi pi-check" (onClick)="saveGroup()" />
+    <ng-template #footer>
+        <div class="flex justify-content-end gap-2 p-3">
+            <p-button label="Cancelar" icon="pi pi-times" [text]="true" severity="secondary" (onClick)="hideDialog()" />
+            <p-button label="Guardar Grupo" icon="pi pi-check" [rounded]="true" (onClick)="saveGroup()" [loading]="saving" [disabled]="saving" />
+        </div>
     </ng-template>
 </p-dialog>

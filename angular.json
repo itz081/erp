@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "Ana_Isabel_Bahena_Sanchez-angular": {
+    "itzel-XD-angular": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -58,10 +58,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "Ana_Isabel_Bahena_Sanchez-angular:build:production"
+              "buildTarget": "itzel-XD-angular:build:production"
             },
             "development": {
-              "buildTarget": "Ana_Isabel_Bahena_Sanchez-angular:build:development"
+              "buildTarget": "itzel-XD-angular:build:development"
             }
           },
           "defaultConfiguration": "development"

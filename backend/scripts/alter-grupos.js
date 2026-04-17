@@ -10,8 +10,8 @@ dotenv.config({ path: join(__dirname, '../.env') });
 const pool = new pg.Pool({
   user: process.env.DB_USER || 'postgres',
   host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'ana',
-  password: process.env.DB_PASSWORD || '1234',
+  database: process.env.DB_NAME || 'bd_seguridad',
+  password: process.env.DB_PASSWORD || 'ItRodriguez08@',
   port: parseInt(process.env.DB_PORT || '5432'),
 });
 

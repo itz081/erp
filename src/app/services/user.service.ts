@@ -37,7 +37,7 @@ export interface UserProfile {
     birthDate: string;
     password?: string;
     groupIds?: number[];
-    grupos?: any[];          // grupos del backend
+    grupos?: any[];         
     permisoBase: PermisoBase;
     permissions?: UserPermissions;
     groupPermissions?: GroupPermissions;
@@ -163,10 +163,6 @@ export class UserService {
         return this.http.post<any>(`${API_URL}/auth/register`, payload);
     }
 
-    /**
-     * Guarda el perfil en el backend y actualiza el signal en tiempo real.
-     * Retorna un Observable para que el componente reaccione al resultado.
-     */
     saveProfile(profile: UserProfile): Observable<any> {
         if (!profile.id) return of(null);
         const payload = {
@@ -176,12 +172,10 @@ export class UserService {
         };
         return this.http.put<any>(`${API_URL}/users/${profile.id}`, payload).pipe(
             tap(() => {
-                // Actualizar el signal del usuario actual inmediatamente
                 const current = this.currentUserSignal();
                 if (current && current.id === profile.id) {
                     this.currentUserSignal.set({ ...current, ...profile });
                 }
-                // Refrescar desde el backend para tener datos canónicos
                 this.loadCurrentUser().subscribe();
             })
         );
@@ -230,7 +224,6 @@ export class UserService {
                 permisos_globales.push('tickets:comment');
             }
 
-            // Preservar permisos de administración si el usuario ya era admin
             if (user.permisoBase === 'admin') {
                 if (!permisos_globales.includes('users:manage')) permisos_globales.push('users:manage');
                 if (!permisos_globales.includes('groups:manage')) permisos_globales.push('groups:manage');

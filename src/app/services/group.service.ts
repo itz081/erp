@@ -24,7 +24,6 @@ export class GroupService {
         }
     }
 
-    /** Carga todos los grupos (sin miembros detallados) */
     loadGroups(): Observable<any[]> {
         const user = this.userService.getProfile();
         const isAdmin = user?.permisoBase === 'admin';
@@ -36,10 +35,12 @@ export class GroupService {
                 const sanitized = loaded.map((g: any) => ({
                     id: g.id,
                     nombre: g.nombre,
+                    descripcion: g.descripcion,
                     categoria: g.categoria || 'N/A',
                     nivel: g.nivel || 'N/A',
                     autor: g.autor || g.creador_nombre || '',
                     miembros: g.miembros || [],
+                    totalMiembros: g.total_miembros || 0,
                     tickets: []
                 }));
                 this.groupsSignal.set(sanitized);
@@ -49,10 +50,6 @@ export class GroupService {
         );
     }
 
-    /**
-     * Carga todos los grupos CON sus miembros detallados (para el perfil de usuario).
-     * Hace GET /groups/:id por cada grupo para obtener la lista de miembros.
-     */
     loadGroupsWithMembers(): void {
         this.http.get<any>(`${API_URL}/groups`).pipe(
             switchMap(res => {

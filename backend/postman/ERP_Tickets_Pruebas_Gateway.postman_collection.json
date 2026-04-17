@@ -235,7 +235,7 @@
                   "pm.test('Status 200', () => pm.response.to.have.status(200));",
                   "pm.test('DB conectada', () => pm.expect(pm.response.json().data.db_connected).to.be.true);",
                   "pm.test('Tiene server_time', () => pm.expect(pm.response.json().data.server_time).to.be.a('string'));",
-                  "pm.test('DB es ana', () => pm.expect(pm.response.json().data.db_name.toLowerCase()).to.eql('ana'));"
+                  "pm.test('DB es bd-seguridad', () => pm.expect(pm.response.json().data.db_name.toLowerCase()).to.eql('ana'));"
                 ]
               }
             }

@@ -52,7 +52,6 @@ export class TrimOnBlurDirective {
         DividerModule,
         DatePickerModule,
         ToastModule,
-        TrimOnBlurDirective,
     ],
     providers: [MessageService],
     templateUrl: './register.html',

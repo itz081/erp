@@ -12,10 +12,13 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { TicketService } from '../../services/ticket.service';
 import { UserService } from '../../services/user.service';
 
+import { AvatarModule } from 'primeng/avatar';
+import { TooltipModule } from 'primeng/tooltip';
+
 @Component({
     selector: 'app-tickets',
     standalone: true,
-    imports: [CommonModule, CardModule, TableModule, ButtonModule, ToolbarModule, TagModule, ConfirmDialogModule, ToastModule],
+    imports: [CommonModule, CardModule, TableModule, ButtonModule, ToolbarModule, TagModule, ConfirmDialogModule, ToastModule, AvatarModule, TooltipModule],
     providers: [MessageService, ConfirmationService],
     templateUrl: './tickets.html',
     styles: []
@@ -56,5 +59,26 @@ export class TicketsComponent {
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Ticket eliminado correctamente' });
             }
         });
+    }
+
+    getEstadoSeverity(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
+        const s = estado?.toLowerCase() || '';
+        if (s.includes('final') || s.includes('terminado')) return 'success';
+        if (s.includes('progreso') || s.includes('curso')) return 'info';
+        if (s.includes('revision') || s.includes('revisión')) return 'warn';
+        if (s.includes('pendiente')) return 'secondary';
+        return 'contrast';
+    }
+
+    getPriorityColor(priority: string): string {
+        const p = priority?.toLowerCase() || '';
+        if (p.includes('alta') || p.includes('critica')) return 'bg-red-500';
+        if (p.includes('media')) return 'bg-orange-500';
+        return 'bg-blue-500';
+    }
+
+    isOverdue(date: any): boolean {
+        if (!date) return false;
+        return new Date(date) < new Date();
     }
 }

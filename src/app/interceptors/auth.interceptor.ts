@@ -5,7 +5,6 @@ import { PLATFORM_ID, inject } from '@angular/core';
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const platformId = inject(PLATFORM_ID);
   
-  // Agregamos el token si está en localStorage y si estamos en el navegador
   if (isPlatformBrowser(platformId)) {
     const token = localStorage.getItem('auth_token');
     if (token) {
@@ -13,7 +12,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         setHeaders: {
           Authorization: `Bearer ${token}`
         },
-        withCredentials: true // también enviamos la cookie configurada por gateway
+        withCredentials: true
       });
       return next(cloned);
     }

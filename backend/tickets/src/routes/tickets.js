@@ -11,7 +11,7 @@ async function verifyToken(request, res) {
   try {
     request.jwtUser = jwt.verify(
       auth.split(' ')[1],
-      process.env.JWT_SECRET || 'ana_secret'
+     process.env.JWT_SECRET || 'seguridad_jwt_secret_super_seguro'
     );
   } catch {
     res.code(401).send(replyError(401, 'SxTK401', 'Token inválido'));
@@ -119,6 +119,12 @@ export default async function ticketsRoutes(fastify) {
     if (!titulo || !grupo_id || !estado_id || !prioridad_id) {
       res.code(400);
       return replyError(400, 'SxTK400', 'Faltan campos obligatorios');
+    }
+
+    const exist = await pool.query('SELECT id FROM tickets WHERE titulo = $1', [titulo.trim()]);
+    if (exist.rowCount > 0) {
+      res.code(400);
+      return replyError(400, 'SxTK400', 'Ya existe un ticket con este título');
     }
 
     const { rows } = await pool.query(

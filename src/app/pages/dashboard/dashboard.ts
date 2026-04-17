@@ -57,7 +57,6 @@ export class DashboardComponent implements OnInit {
         }));
     });
 
-    /** Contadores rápidos */
     stats = computed(() => {
         const tickets = this.userTickets();
         const grupos = this.userGroups();
@@ -81,7 +80,6 @@ export class DashboardComponent implements OnInit {
     }
 
     ngOnInit() {
-        // Cargar grupos con miembros para poder filtrar correctamente
         this.groupService.loadGroupsWithMembers();
     }
 
@@ -101,7 +99,6 @@ export class DashboardComponent implements OnInit {
                 datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#ffffff' }]
             };
         } else {
-            // Fallback si aún no cargaron los catálogos
             const statuses = ['Pendiente', 'En progreso', 'Revisión', 'Finalizado'];
             this.chartData = {
                 labels: statuses,

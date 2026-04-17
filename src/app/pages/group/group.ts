@@ -19,13 +19,15 @@ import { GroupService } from '../../services/group.service';
 import { TicketService } from '../../services/ticket.service';
 import { Group } from '../../models/group.model';
 
+import { DataViewModule } from 'primeng/dataview';
+
 @Component({
   selector: 'app-group',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TagModule, CardModule, DividerModule,
     TableModule, ButtonModule, ToolbarModule, DialogModule, InputTextModule,
-    SelectModule, ToastModule, ConfirmDialogModule
+    SelectModule, ToastModule, ConfirmDialogModule, DataViewModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './group.html',
@@ -47,7 +49,6 @@ export class GroupComponent implements OnInit {
         tickets: ts.filter((t: any) => t.groupId === g.id)
     }));
   });
-  
   canAdd = computed(() => {
     const user: any = this.userService.getCurrentUser()();
     return user?.permisoBase === 'admin' || (user?.groupPermissions?.canAdd ?? user?.permissions?.canAdd ?? false);
@@ -78,7 +79,11 @@ export class GroupComponent implements OnInit {
     { label: 'Avanzado', value: 'Avanzado' }
   ];
 
+  saving = false;
+
   ngOnInit() {
+    // Force reload groups every time this page is visited
+    this.groupService.loadGroups().subscribe();
   }
 
   openNew() {
@@ -115,19 +120,37 @@ export class GroupComponent implements OnInit {
   }
 
   saveGroup() {
+    if (this.saving) return;
     this.submitted = true;
     if (this.groupItem.nombre?.trim()) {
+      this.saving = true;
       if (this.groupItem.id) {
-        this.groupService.updateGroup(this.groupItem as Group).subscribe(() => {
-          this.messageService.add({ severity: 'success', summary: 'Actualizado', detail: 'Grupo modificado correctamente', life: 3000 });
-          this.groupDialog = false;
-          this.groupItem = {};
+        this.groupService.updateGroup(this.groupItem as any).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Actualizado', detail: 'Grupo modificado correctamente', life: 3000 });
+            this.groupDialog = false;
+            this.groupItem = {};
+            this.saving = false;
+          },
+          error: (err) => { 
+              this.saving = false; 
+              const msg = err.error?.error || 'No se pudo actualizar el grupo';
+              this.messageService.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 });
+          }
         });
       } else {
-        this.groupService.createGroup(this.groupItem).subscribe(() => {
-          this.messageService.add({ severity: 'success', summary: 'Creado', detail: 'Grupo añadido correctamente', life: 3000 });
-          this.groupDialog = false;
-          this.groupItem = {};
+        this.groupService.createGroup(this.groupItem).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Creado', detail: 'Grupo añadido correctamente', life: 3000 });
+            this.groupDialog = false;
+            this.groupItem = {};
+            this.saving = false;
+          },
+          error: (err) => { 
+              this.saving = false; 
+              const msg = err.error?.error || 'No se pudo crear el grupo';
+              this.messageService.add({ severity: 'error', summary: 'Error', detail: msg, life: 3000 });
+          }
         });
       }
     } else {

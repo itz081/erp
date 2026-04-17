@@ -1,158 +1,150 @@
 <p-toast />
 
-<div class="profile-wrapper">
-
-  <!-- Sin perfil -->
-  @if (!profile()) {
-  <p-message severity="info" text="No hay usuario registrado." styleClass="w-full" />
-  } @else {
-
-  <!-- ─── HERO CARD ──────────────────────────────────────────── -->
-  <p-card styleClass="profile-card">
-    <div class="profile-hero">
-      <div class="avatar-circle">
-        <span class="avatar-initials">{{ getInitials(profile()!.fullName) }}</span>
-      </div>
-      <div class="profile-hero-info">
-        <h3 class="profile-full-name">{{ profile()!.fullName }}</h3>
-        <span class="profile-username">&#64;{{ profile()!.username }}</span>
-        <div class="hero-tags">
-          <p-tag [value]="profile()!.permisoBase === 'admin' ? 'Administrador' : 'Usuario'"
-            [severity]="profile()!.permisoBase === 'admin' ? 'danger' : 'info'" />
-          <p-tag value="Activo" severity="success" />
-        </div>
-      </div>
-      <div class="hero-actions ml-auto">
-        @if (!editMode) {
-        <p-button icon="pi pi-pencil" rounded="true" text="true" severity="info"
-          (onClick)="toggleEditMode()" pTooltip="Editar perfil" />
-        } @else {
-        <p-button icon="pi pi-times" rounded="true" text="true" severity="secondary"
-          (onClick)="toggleEditMode()" pTooltip="Cancelar" />
-        }
-      </div>
-    </div>
-
-    <p-divider />
-
-    <!-- Modo vista -->
-    @if (!editMode) {
-    <div class="profile-grid">
-
-      <div class="profile-field">
-        <span class="field-label"><i class="pi pi-envelope"></i> Correo electrónico</span>
-        <span class="field-value">{{ profile()!.email }}</span>
-      </div>
-
-      <div class="profile-field">
-        <span class="field-label"><i class="pi pi-phone"></i> Teléfono</span>
-        <span class="field-value">{{ profile()!.phone || '—' }}</span>
-      </div>
-
-      <div class="profile-field">
-        <span class="field-label"><i class="pi pi-map-marker"></i> Dirección</span>
-        <span class="field-value">{{ profile()!.address || '—' }}</span>
-      </div>
-
-      <div class="profile-field">
-        <span class="field-label"><i class="pi pi-id-card"></i> ID de usuario</span>
-        <span class="field-value mono">{{ profile()!.id }}</span>
-      </div>
-
-    </div>
+<div class="flex flex-column gap-5">
+    @if (!profile()) {
+        <p-message severity="info" text="No hay usuario registrado." styleClass="w-full" />
     } @else {
-
-    <!-- Modo edición -->
-    <form [formGroup]="editForm" (ngSubmit)="saveProfile()" class="edit-form">
-      <div class="formgrid grid">
-
-        <div class="field col-12 md:col-6 mb-4">
-          <p-floatlabel variant="on">
-            <input id="edit-fullname" type="text" pInputText formControlName="fullName" class="w-full" />
-            <label for="edit-fullname">Nombre completo</label>
-          </p-floatlabel>
+        
+        <!-- Profile Header -->
+        <div class="bg-white border-round-2xl shadow-1 overflow-hidden">
+            <div class="h-8rem bg-primary-faded relative">
+                <div class="absolute -bottom-4rem left-3 md:left-5">
+                    <p-avatar [label]="getInitials(profile()!.fullName)" shape="circle" size="xlarge" 
+                        styleClass="w-8rem h-8rem text-4xl shadow-5 border-4 border-white bg-primary text-white" />
+                </div>
+                <div class="absolute bottom-0 right-0 p-3">
+                    <p-button *ngIf="!editMode" icon="pi pi-pencil" label="Editar Perfil" [rounded]="true" (onClick)="toggleEditMode()" />
+                    <p-button *ngIf="editMode" icon="pi pi-times" label="Cancelar" [rounded]="true" severity="secondary" (onClick)="toggleEditMode()" />
+                </div>
+            </div>
+            
+            <div class="pt-5 pb-4 px-3 md:px-5 mt-4">
+                <div class="flex flex-column md:flex-row md:align-items-center justify-content-between gap-3">
+                    <div>
+                        <h1 class="text-3xl font-bold m-0 text-900">{{ profile()!.fullName }}</h1>
+                        <span class="text-600 font-medium">&#64;{{ profile()!.username }}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <p-tag [value]="profile()!.permisoBase === 'admin' ? 'Administrador' : 'Usuario'"
+                            [severity]="profile()!.permisoBase === 'admin' ? 'danger' : 'info'" [rounded]="true" />
+                        <p-tag value="Cuenta Verificada" severity="success" icon="pi pi-verified" [rounded]="true" />
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="field col-12 md:col-6 mb-4">
-          <p-floatlabel variant="on">
-            <input id="edit-phone" type="text" pInputText formControlName="phone" class="w-full" maxlength="10" />
-            <label for="edit-phone">Teléfono</label>
-          </p-floatlabel>
-          @if (editForm.get('phone')?.invalid && editForm.get('phone')?.touched) {
-          <small class="field-error">Solo números, hasta 10 dígitos</small>
-          }
+        <div class="grid">
+            <!-- Left Column: Details -->
+            <div class="col-12 lg:col-4">
+                <p-card header="Información Personal" styleClass="shadow-2 border-round-2xl h-full">
+                    @if (!editMode) {
+                        <div class="flex flex-column gap-4">
+                            <div class="flex align-items-center gap-3">
+                                <i class="pi pi-envelope text-primary text-xl"></i>
+                                <div class="flex flex-column">
+                                    <span class="text-xs text-500 uppercase font-bold">Email</span>
+                                    <span class="text-900 font-medium">{{ profile()!.email }}</span>
+                                </div>
+                            </div>
+                            <div class="flex align-items-center gap-3">
+                                <i class="pi pi-phone text-primary text-xl"></i>
+                                <div class="flex flex-column">
+                                    <span class="text-xs text-500 uppercase font-bold">Teléfono</span>
+                                    <span class="text-900 font-medium">{{ profile()!.phone || 'No registrado' }}</span>
+                                </div>
+                            </div>
+                            <div class="flex align-items-center gap-3">
+                                <i class="pi pi-map-marker text-primary text-xl"></i>
+                                <div class="flex flex-column">
+                                    <span class="text-xs text-500 uppercase font-bold">Ubicación</span>
+                                    <span class="text-900 font-medium text-wrap">{{ profile()!.address || 'No registrado' }}</span>
+                                </div>
+                            </div>
+                            <div class="flex align-items-center gap-3">
+                                <i class="pi pi-calendar text-primary text-xl"></i>
+                                <div class="flex flex-column">
+                                    <span class="text-xs text-500 uppercase font-bold">Miembro desde</span>
+                                    <span class="text-900 font-medium">{{ 'Abril 2024' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    } @else {
+                        <form [formGroup]="editForm" (ngSubmit)="saveProfile()" class="flex flex-column gap-4 mt-2">
+                            <div class="flex flex-column gap-2">
+                                <label class="font-bold text-900">Nombre Completo</label>
+                                <input pInputText formControlName="fullName" />
+                            </div>
+                            <div class="flex flex-column gap-2">
+                                <label class="font-bold text-900">Teléfono</label>
+                                <input pInputText formControlName="phone" maxlength="10" />
+                            </div>
+                            <div class="flex flex-column gap-2">
+                                <label class="font-bold text-900">Dirección</label>
+                                <textarea pInputTextarea formControlName="address" rows="3"></textarea>
+                            </div>
+                            <p-button type="submit" label="Guardar Cambios" icon="pi pi-check" [rounded]="true" [loading]="saving()" [disabled]="editForm.invalid" />
+                        </form>
+                    }
+                </p-card>
+            </div>
+
+            <!-- Right Column: Activity -->
+            <div class="col-12 lg:col-8">
+                <div class="flex flex-column gap-4">
+                    <!-- Grupos -->
+                    <p-card header="Mis Grupos de Trabajo" styleClass="shadow-2 border-round-2xl">
+                        @if (userGroups().length === 0) {
+                            <div class="text-center py-5 text-600">
+                                <i class="pi pi-users text-4xl mb-3 opacity-50"></i>
+                                <p>No perteneces a ningún grupo</p>
+                            </div>
+                        } @else {
+                            <div class="grid">
+                                @for (grupo of userGroups(); track grupo.id) {
+                                    <div class="col-12 md:col-6 lg:col-4 p-2">
+                                        <div class="p-3 border-1 surface-border border-round-xl hover:surface-100 cursor-pointer transition-colors" (click)="navigateToGroup(grupo.id)">
+                                            <div class="flex align-items-center gap-3">
+                                                <div class="w-2rem h-2rem border-circle bg-primary-faded flex align-items-center justify-content-center">
+                                                    <i class="pi pi-users text-primary"></i>
+                                                </div>
+                                                <div class="flex flex-column overflow-hidden">
+                                                    <span class="font-bold text-900 white-space-nowrap overflow-hidden text-overflow-ellipsis">{{ grupo.nombre }}</span>
+                                                    <span class="text-xs text-500">{{ grupo.categoria || 'Sin categoría' }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </p-card>
+
+                    <!-- Tickets -->
+                    <p-card header="Tickets Recientes" styleClass="shadow-2 border-round-2xl">
+                        @if (userTickets().length === 0) {
+                            <div class="text-center py-5 text-600">
+                                <i class="pi pi-ticket text-4xl mb-3 opacity-50"></i>
+                                <p>No tienes tickets asignados</p>
+                            </div>
+                        } @else {
+                            <div class="flex flex-column gap-2">
+                                @for (ticket of userTickets().slice(0, 5); track ticket.id) {
+                                    <div class="flex align-items-center justify-content-between p-3 border-round-xl hover:surface-100 cursor-pointer transition-colors" (click)="navigateToTicket(ticket.id)">
+                                        <div class="flex align-items-center gap-3">
+                                            <i class="pi pi-circle-fill text-xs" [class]="ticket.prioridad === 'Alta' ? 'text-red-500' : 'text-blue-500'"></i>
+                                            <div class="flex flex-column">
+                                                <span class="font-bold text-900">{{ ticket.titulo }}</span>
+                                                <span class="text-xs text-500">{{ ticket.estado }}</span>
+                                            </div>
+                                        </div>
+                                        <i class="pi pi-chevron-right text-400"></i>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </p-card>
+                </div>
+            </div>
         </div>
-
-        <div class="field col-12 mb-4">
-          <p-floatlabel variant="on">
-            <input id="edit-address" type="text" pInputText formControlName="address" class="w-full" />
-            <label for="edit-address">Dirección</label>
-          </p-floatlabel>
-        </div>
-
-      </div>
-
-      <div class="flex justify-content-end gap-3">
-        <p-button label="Cancelar" icon="pi pi-times" severity="secondary" outlined="true"
-          (onClick)="toggleEditMode()" type="button" />
-        <p-button type="submit" label="Guardar cambios" icon="pi pi-check" severity="success"
-          [loading]="saving()" [disabled]="editForm.invalid" />
-      </div>
-    </form>
-
     }
-  </p-card>
-
-  <!-- ─── GRUPOS DEL USUARIO ────────────────────────────────── -->
-  <p-card styleClass="info-card mt-3" header="Mis Grupos">
-    @if (userGroups().length === 0) {
-    <div class="empty-state">
-      <i class="pi pi-users empty-icon"></i>
-      <p>No perteneces a ningún grupo aún.</p>
-    </div>
-    } @else {
-    <div class="groups-grid">
-      @for (grupo of userGroups(); track grupo.id) {
-      <div class="group-chip" (click)="navigateToGroup(grupo.id)">
-        <i class="pi pi-users chip-icon"></i>
-        <span class="chip-label">{{ grupo.nombre }}</span>
-        @if (grupo.descripcion) {
-        <span class="chip-desc">{{ grupo.descripcion }}</span>
-        }
-        <i class="pi pi-arrow-right chip-arrow"></i>
-      </div>
-      }
-    </div>
-    }
-  </p-card>
-
-  <!-- ─── TICKETS ASIGNADOS ─────────────────────────────────── -->
-  <p-card styleClass="info-card mt-3" header="Mis Tickets">
-    @if (userTickets().length === 0) {
-    <div class="empty-state">
-      <i class="pi pi-ticket empty-icon"></i>
-      <p>No tienes tickets asignados.</p>
-    </div>
-    } @else {
-    <div class="tickets-list">
-      @for (ticket of userTickets().slice(0, 8); track ticket.id) {
-      <div class="ticket-row" (click)="navigateToTicket(ticket.id)">
-        <div class="ticket-info">
-          <span class="ticket-title">{{ ticket.titulo }}</span>
-          <span class="ticket-meta">{{ ticket.estado }} · {{ ticket.prioridad }}</span>
-        </div>
-        @if (ticket.fechaLimite) {
-        <span class="ticket-date">{{ formatDate(ticket.fechaLimite) }}</span>
-        }
-        <i class="pi pi-chevron-right ticket-arrow"></i>
-      </div>
-      }
-      @if (userTickets().length > 8) {
-      <div class="tickets-more">+{{ userTickets().length - 8 }} tickets más</div>
-      }
-    </div>
-    }
-  </p-card>
-
-  }
 </div>

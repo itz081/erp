@@ -13,18 +13,13 @@ const client = new Client({
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '1234',
-  database: process.env.DB_NAME || 'ana'
+  password: process.env.DB_PASSWORD || 'ItRodriguez08@',
+  database: process.env.DB_NAME || 'bd_seguridad',
 });
 
 async function cleanup() {
   await client.connect();
   console.log('🧹 Limpiando catálogos duplicados...');
-
-  // 1. Estados
-  // Queremos quedarnos solo con PENDIENTE, EN CURSO, TERMINADO
-  // Primero, si hay tickets apuntando a los viejos, intentemos moverlos a los nuevos si es posible, 
-  // o simplemente eliminamos los que no se usen.
 
   await client.query(`
     -- Eliminar estados que no sean los deseados (si no tienen tickets asociados)

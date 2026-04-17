@@ -1,112 +1,171 @@
-<p-toast></p-toast>
-<p-confirmDialog></p-confirmDialog>
+<p-toast />
+<p-confirmDialog />
 
-<div class="p-4">
-    <div class="flex justify-content-between align-items-center mb-4">
-        <h2>Gestión de Usuarios</h2>
-        <p-button label="Nuevo Usuario" icon="pi pi-user-plus" severity="success"
-            (onClick)="openAddDialog()"></p-button>
+<div class="flex flex-column gap-5">
+    <!-- Header -->
+    <div class="flex flex-column md:flex-row md:align-items-center justify-content-between gap-3">
+        <div>
+            <h1 class="text-3xl font-bold m-0 text-900">Gestión de Usuarios</h1>
+            <p class="text-600 mt-2">Administra los accesos y permisos granulares de todo el personal.</p>
+        </div>
+        <div class="flex gap-2">
+            <p-button label="Nuevo Usuario" icon="pi pi-user-plus" [rounded]="true" (onClick)="openAddDialog()" />
+        </div>
     </div>
 
-    <p-card>
-        <p-table [value]="users()" [paginator]="true" [rows]="10" responsiveLayout="scroll"
-            [tableStyle]="{'min-width': '70rem'}">
+    <!-- Table -->
+    <p-card styleClass="shadow-2 border-round-2xl overflow-hidden">
+        <p-table [value]="users()" [paginator]="true" [rows]="10" responsiveLayout="scroll" dataKey="email" [rowHover]="true">
             <ng-template pTemplate="header">
                 <tr>
-                    <th class="align-bottom">Nombre</th>
-                    <th class="align-bottom">Email</th>
-                    <th class="text-center">Permisos de Grupo</th>
-                    <th class="text-center">Permisos de Ticket</th>
-                    <th class="align-bottom text-center">Acciones</th>
+                    <th class="pl-4">Usuario</th>
+                    <th>Correo</th>
+                    <th class="text-center">Permisos Tickets</th>
+                    <th class="text-center">Permisos Grupos</th>
+                    <th class="text-right pr-4">Acciones</th>
                 </tr>
             </ng-template>
+
             <ng-template pTemplate="body" let-user>
                 <tr>
-                    <td>{{user.fullName}}</td>
+                    <td class="pl-4">
+                        <div class="flex align-items-center gap-2">
+                            <p-avatar [label]="user.fullName.charAt(0).toUpperCase()" shape="circle" styleClass="bg-primary-faded text-primary font-bold" />
+                            <span class="font-bold text-900">{{user.fullName}}</span>
+                        </div>
+                    </td>
                     <td>{{user.email}}</td>
-                    
-                    <!-- Permisos de Grupo en Lista -->
-                    <td>
-                        <div class="flex flex-column gap-2 p-2">
-                            <div class="flex align-items-center gap-2">
-                                <p-checkbox [(ngModel)]="user.groupPermissions!.canAdd" [binary]="true" (onChange)="onPermissionChange(user)" inputId="g_add_{{user.id}}"></p-checkbox>
-                                <label for="g_add_{{user.id}}" class="text-xs">Crear Grupo</label>
-                            </div>
-                            <div class="flex align-items-center gap-2">
-                                <p-checkbox [(ngModel)]="user.groupPermissions!.canEdit" [binary]="true" (onChange)="onPermissionChange(user)" inputId="g_edi_{{user.id}}"></p-checkbox>
-                                <label for="g_edi_{{user.id}}" class="text-xs">Editar Grupo</label>
-                            </div>
-                            <div class="flex align-items-center gap-2">
-                                <p-checkbox [(ngModel)]="user.groupPermissions!.canDelete" [binary]="true" (onChange)="onPermissionChange(user)" inputId="g_eli_{{user.id}}"></p-checkbox>
-                                <label for="g_eli_{{user.id}}" class="text-xs">Eliminar Grupo</label>
-                            </div>
-                            <div class="flex align-items-center gap-2">
-                                <p-checkbox [(ngModel)]="user.groupPermissions!.canAddMember" [binary]="true" (onChange)="onPermissionChange(user)" inputId="gm_add_{{user.id}}"></p-checkbox>
-                                <label for="gm_add_{{user.id}}" class="text-xs">Añadir Miembro</label>
-                            </div>
-                            <div class="flex align-items-center gap-2">
-                                <p-checkbox [(ngModel)]="user.groupPermissions!.canDeleteMember" [binary]="true" (onChange)="onPermissionChange(user)" inputId="gm_eli_{{user.id}}"></p-checkbox>
-                                <label for="gm_eli_{{user.id}}" class="text-xs">Eliminar Miembro</label>
-                            </div>
-                        </div>
-                    </td>
-
-                    <!-- Permisos de Ticket en Lista -->
-                    <td>
-                        <div class="flex flex-column gap-2 p-2">
-                            <div class="flex align-items-center gap-2">
-                                <p-checkbox [(ngModel)]="user.ticketPermissions!.canAdd" [binary]="true" (onChange)="onPermissionChange(user)" inputId="t_add_{{user.id}}"></p-checkbox>
-                                <label for="t_add_{{user.id}}" class="text-xs">Crear Ticket</label>
-                            </div>
-                            <div class="flex align-items-center gap-2">
-                                <p-checkbox [(ngModel)]="user.ticketPermissions!.canEdit" [binary]="true" (onChange)="onPermissionChange(user)" inputId="t_edi_{{user.id}}"></p-checkbox>
-                                <label for="t_edi_{{user.id}}" class="text-xs">Editar Ticket</label>
-                            </div>
-                            <div class="flex align-items-center gap-2">
-                                <p-checkbox [(ngModel)]="user.ticketPermissions!.canDelete" [binary]="true" (onChange)="onPermissionChange(user)" inputId="t_eli_{{user.id}}"></p-checkbox>
-                                <label for="t_eli_{{user.id}}" class="text-xs">Eliminar Ticket</label>
-                            </div>
-                            <div class="flex align-items-center gap-2">
-                                <p-checkbox [(ngModel)]="user.groupPermissions!.canComment" [binary]="true" (onChange)="onPermissionChange(user)" inputId="t_com_{{user.id}}"></p-checkbox>
-                                <label for="t_com_{{user.id}}" class="text-xs">Comentar</label>
-                            </div>
-                        </div>
-                    </td>
-
                     <td class="text-center">
-                        <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
-                            (onClick)="deleteUser(user)" pTooltip="Eliminar Usuario"></p-button>
+                        <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info" 
+                            (onClick)="openTicketPerms(user)" pTooltip="Editar Permisos Tickets" />
                     </td>
+                    <td class="text-center">
+                        <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info" 
+                            (onClick)="openGroupPerms(user)" pTooltip="Editar Permisos Grupos" />
+                    </td>
+                    <td class="text-right pr-4">
+                        <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" (onClick)="deleteUser(user)" pTooltip="Eliminar Usuario" />
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-500">No se encontraron usuarios.</td>
                 </tr>
             </ng-template>
         </p-table>
     </p-card>
 </div>
 
-<!-- Modal Añadir Usuario -->
-<p-dialog header="Crear Nuevo Usuario" [(visible)]="displayAddDialog" [modal]="true" [style]="{ width: '450px' }"
-    styleClass="p-fluid">
-    <ng-template pTemplate="content">
-        <div class="field mb-3">
-            <label for="fullName">Nombre Completo</label>
-            <input pInputText id="fullName" [(ngModel)]="newUser.fullName" required placeholder="Ej: Juan Perez" />
+<!-- Permisos Grupos Dialog -->
+<p-dialog header="Permisos de Grupos" [(visible)]="displayGroupPerms" [modal]="true" [style]="{ width: '400px' }" [draggable]="false" [resizable]="false" styleClass="border-round-2xl overflow-hidden">
+    @if (selectedUser) {
+        <div class="flex flex-column gap-4 py-3">
+            <div class="text-center mb-2">
+                <p-avatar [label]="selectedUser.fullName.charAt(0).toUpperCase()" shape="circle" size="large" styleClass="bg-primary-faded text-primary mb-2" />
+                <h3 class="m-0 text-900">{{selectedUser.fullName}}</h3>
+                <span class="text-600 text-sm">{{selectedUser.email}}</span>
+            </div>
+
+            <p-divider />
+
+            <div class="flex flex-column gap-3">
+                <div class="flex align-items-center justify-content-between p-2 hover:surface-50 border-round-lg transition-colors">
+                    <label class="text-700 font-medium">Crear Grupo</label>
+                    <p-checkbox [(ngModel)]="selectedUser.groupPermissions!.canAdd" [binary]="true" />
+                </div>
+                <div class="flex align-items-center justify-content-between p-2 hover:surface-50 border-round-lg transition-colors">
+                    <label class="text-700 font-medium">Editar Grupo</label>
+                    <p-checkbox [(ngModel)]="selectedUser.groupPermissions!.canEdit" [binary]="true" />
+                </div>
+                <div class="flex align-items-center justify-content-between p-2 hover:surface-50 border-round-lg transition-colors">
+                    <label class="text-700 font-medium">Eliminar Grupo</label>
+                    <p-checkbox [(ngModel)]="selectedUser.groupPermissions!.canDelete" [binary]="true" />
+                </div>
+                <div class="flex align-items-center justify-content-between p-2 hover:surface-50 border-round-lg transition-colors">
+                    <label class="text-700 font-medium">Añadir Miembro</label>
+                    <p-checkbox [(ngModel)]="selectedUser.groupPermissions!.canAddMember" [binary]="true" />
+                </div>
+                <div class="flex align-items-center justify-content-between p-2 hover:surface-50 border-round-lg transition-colors">
+                    <label class="text-700 font-medium">Eliminar Miembro</label>
+                    <p-checkbox [(ngModel)]="selectedUser.groupPermissions!.canDeleteMember" [binary]="true" />
+                </div>
+            </div>
         </div>
-        <div class="field mb-3">
-            <label for="username">Username</label>
-            <input pInputText id="username" [(ngModel)]="newUser.username" required placeholder="Ej: juanp" />
-        </div>
-        <div class="field mb-3">
-            <label for="email">Email</label>
-            <input pInputText id="email" [(ngModel)]="newUser.email" required placeholder="Ej: juan@test.com" />
-        </div>
-        <div class="field mb-3">
-            <label for="password">Contraseña</label>
-            <input pInputText type="password" id="password" [(ngModel)]="newUser.password" required placeholder="********" />
+    }
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2 p-3">
+            <p-button label="Cancelar" [text]="true" severity="secondary" (onClick)="displayGroupPerms = false" />
+            <p-button label="Guardar Cambios" [rounded]="true" (onClick)="savePermissions()" />
         </div>
     </ng-template>
+</p-dialog>
 
+<!-- Permisos Tickets Dialog -->
+<p-dialog header="Permisos de Tickets" [(visible)]="displayTicketPerms" [modal]="true" [style]="{ width: '400px' }" [draggable]="false" [resizable]="false" styleClass="border-round-2xl overflow-hidden">
+    @if (selectedUser) {
+        <div class="flex flex-column gap-4 py-3">
+            <div class="text-center mb-2">
+                <p-avatar [label]="selectedUser.fullName.charAt(0).toUpperCase()" shape="circle" size="large" styleClass="bg-primary-faded text-primary mb-2" />
+                <h3 class="m-0 text-900">{{selectedUser.fullName}}</h3>
+                <span class="text-600 text-sm">{{selectedUser.email}}</span>
+            </div>
+
+            <p-divider />
+
+            <div class="flex flex-column gap-3">
+                <div class="flex align-items-center justify-content-between p-2 hover:surface-50 border-round-lg transition-colors">
+                    <label class="text-700 font-medium">Crear Tickets</label>
+                    <p-checkbox [(ngModel)]="selectedUser.ticketPermissions!.canAdd" [binary]="true" />
+                </div>
+                <div class="flex align-items-center justify-content-between p-2 hover:surface-50 border-round-lg transition-colors">
+                    <label class="text-700 font-medium">Editar Tickets</label>
+                    <p-checkbox [(ngModel)]="selectedUser.ticketPermissions!.canEdit" [binary]="true" />
+                </div>
+                <div class="flex align-items-center justify-content-between p-2 hover:surface-50 border-round-lg transition-colors">
+                    <label class="text-700 font-medium">Eliminar Tickets</label>
+                    <p-checkbox [(ngModel)]="selectedUser.ticketPermissions!.canDelete" [binary]="true" />
+                </div>
+                <div class="flex align-items-center justify-content-between p-2 hover:surface-50 border-round-lg transition-colors">
+                    <label class="text-700 font-medium">Comentar</label>
+                    <p-checkbox [(ngModel)]="selectedUser.groupPermissions!.canComment" [binary]="true" />
+                </div>
+            </div>
+        </div>
+    }
     <ng-template pTemplate="footer">
-        <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="displayAddDialog = false"></p-button>
-        <p-button label="Guardar" icon="pi pi-check" (onClick)="saveNewUser()"></p-button>
+        <div class="flex justify-content-end gap-2 p-3">
+            <p-button label="Cancelar" [text]="true" severity="secondary" (onClick)="displayTicketPerms = false" />
+            <p-button label="Guardar Cambios" [rounded]="true" (onClick)="savePermissions()" />
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Add User Dialog -->
+<p-dialog header="Registrar Nuevo Colaborador" [(visible)]="displayAddDialog" [modal]="true" [style]="{ width: '450px' }" [draggable]="false" [resizable]="false" styleClass="p-fluid border-round-2xl overflow-hidden">
+    <div class="flex flex-column gap-4 py-3">
+        <div class="flex flex-column gap-2">
+            <label class="font-bold text-900">Nombre Completo</label>
+            <input pInputText [(ngModel)]="newUser.fullName" placeholder="Ej. Ana García" />
+        </div>
+        <div class="flex flex-column gap-2">
+            <label class="font-bold text-900">Email Corporativo</label>
+            <input pInputText [(ngModel)]="newUser.email" placeholder="ana.garcia@empresa.com" />
+        </div>
+        <div class="flex flex-column gap-2">
+            <label class="font-bold text-900">Nombre de Usuario</label>
+            <input pInputText [(ngModel)]="newUser.username" placeholder="agarcia" />
+        </div>
+        <div class="flex flex-column gap-2">
+            <label class="font-bold text-900">Contraseña Temporal</label>
+            <input pInputText type="password" [(ngModel)]="newUser.password" />
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2 p-3">
+            <p-button label="Descartar" [text]="true" severity="secondary" (onClick)="displayAddDialog = false" />
+            <p-button label="Crear Usuario" [rounded]="true" (onClick)="saveNewUser()" />
+        </div>
     </ng-template>
 </p-dialog>

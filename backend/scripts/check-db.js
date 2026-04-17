@@ -1,8 +1,4 @@
-#!/usr/bin/env node
-/**
- * Script para verificar y probar la conexión a PostgreSQL
- * Ejecutar: node scripts/check-db.js
- */
+
 import pg from 'pg';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -18,9 +14,9 @@ async function check() {
   const config = {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432'),
-    database: 'ana',
+    database: 'bd_seguridad', 
     user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || '1234',
+    password: process.env.DB_PASSWORD || 'ItRodriguez08@',
   };
 
   process.stdout.write('\n🔍 Verificando conexión a PostgreSQL...\n');

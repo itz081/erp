@@ -9,6 +9,7 @@ import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
+import { DividerModule } from 'primeng/divider';
 import { MessageService } from 'primeng/api';
 import { TicketService } from '../../services/ticket.service';
 import { GroupService } from '../../services/group.service';
@@ -17,7 +18,7 @@ import { UserService, UserProfile } from '../../services/user.service';
 @Component({
     selector: 'app-ticket-create',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, CardModule, InputTextModule, TextareaModule, SelectModule, DatePickerModule, ButtonModule, ToastModule],
+    imports: [CommonModule, ReactiveFormsModule, CardModule, InputTextModule, TextareaModule, SelectModule, DatePickerModule, ButtonModule, ToastModule, DividerModule],
     providers: [MessageService],
     templateUrl: './ticket-create.html',
     styles: []
@@ -32,6 +33,7 @@ export class TicketCreateComponent implements OnInit {
     messageService = inject(MessageService);
 
     ticketForm!: FormGroup;
+    saving = false;
 
     prioridades = computed(() => this.ticketService.prioridades());
     estados = computed(() => this.ticketService.estados());
@@ -61,7 +63,6 @@ export class TicketCreateComponent implements OnInit {
             fechaLimite: [null, Validators.required]
         });
 
-        // Cargar catálogos y poner defaults precisos
         this.ticketService.loadCatalogs().subscribe(() => {
             const pendiente = this.estados().find(e => e.nombre === 'PENDIENTE');
             const media = this.prioridades().find(p => p.nombre === 'MEDIA');
@@ -69,14 +70,12 @@ export class TicketCreateComponent implements OnInit {
             if (media) this.ticketForm.patchValue({ prioridadId: media.id });
         });
 
-        // Al cambiar de grupo, filtrar los usuarios para mostrar solo miembros del grupo
         this.ticketForm.get('groupId')?.valueChanges.subscribe(groupId => {
             if (groupId) {
                 this.groupService.loadGroupById(groupId).subscribe(group => {
                     const miembros = group?.miembros || [];
                     this.filteredUsers.set(miembros);
                     
-                    // Si el usuario asignado actualmente no está en el nuevo grupo, resetearlo
                     const currentAsig = this.ticketForm.get('asignadoId')?.value;
                     if (currentAsig && !miembros.find((m: any) => m.id === currentAsig.id)) {
                         this.ticketForm.patchValue({ asignadoId: null });
@@ -89,13 +88,13 @@ export class TicketCreateComponent implements OnInit {
 
         this.route.queryParams.subscribe(params => {
             if (params['groupId']) {
-                // El ID ahora es UUID (string)
                 this.ticketForm.patchValue({ groupId: params['groupId'] });
             }
         });
     }
 
     onSubmit() {
+        if (this.saving) return;
         if (this.ticketForm.invalid) {
             this.ticketForm.markAllAsTouched();
             this.messageService.add({ severity: 'error', summary: 'Campos faltantes', detail: 'Por favor, completa/corrige todos los campos obligatorios.' });
@@ -114,21 +113,25 @@ export class TicketCreateComponent implements OnInit {
             titulo: formValues.titulo,
             descripcion: formValues.descripcion,
             groupId: formValues.groupId,
-            asignadoId: formValues.asignadoId.id, // El objeto del p-select tiene .id
+            asignadoId: formValues.asignadoId.id, 
             estadoId: formValues.estadoId,
             prioridadId: formValues.prioridadId,
             fechaLimite: formValues.fechaLimite
         };
 
+        this.saving = true;
         this.ticketService.createTicket(newTicketData).subscribe({
             next: () => {
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Ticket creado exitosamente y guardado en la base de datos' });
+                this.saving = false;
                 setTimeout(() => {
                     this.router.navigate(['/home/groups', formValues.groupId]);
                 }, 1000);
             },
             error: (err) => {
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar el ticket en la base de datos' });
+                this.saving = false;
+                const msg = err.error?.error || 'No se pudo guardar el ticket en la base de datos';
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: msg });
             }
         });
     }

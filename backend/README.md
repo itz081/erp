@@ -51,7 +51,7 @@ cd backend
 node scripts/db-setup.js
 ```
 
-Esto crea la base de datos `ANA` con todas las tablas y datos seed.
+Esto crea la base de datos `bd-seguridad` con todas las tablas y datos seed.
 
 ### 4. Iniciar servicios
 

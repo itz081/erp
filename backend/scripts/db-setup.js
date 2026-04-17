@@ -1,8 +1,4 @@
-#!/usr/bin/env node
-/**
- * Script de configuración de la base de datos ANA
- * Ejecutar: node scripts/db-setup.js
- */
+
 import pg from 'pg';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
@@ -17,7 +13,7 @@ const { Client } = pg;
 const DB_CONFIG = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
-  user: process.env.DB_USER || 'postgres',
+  user: process.env.DB_USER || 'postgres',   
   password: process.env.DB_PASSWORD || '1234',
 };
 
@@ -149,12 +145,12 @@ WHERE username = 'admin' OR email = 'admin@admin.com';
 `;
 
 async function run() {
-  process.stdout.write('🔧 Configurando base de datos ana...\n');
+  process.stdout.write('🔧 Configurando base de datos bd-seguridad...\n');
 
   const adminClient = new Client({ ...DB_CONFIG, database: 'postgres' });
   await adminClient.connect();
 
-  const dbName = process.env.DB_NAME || 'ana';
+  const dbName = process.env.DB_NAME || 'bd-seguridad';
 
   const dbCheck = await adminClient.query(
     `SELECT 1 FROM pg_database WHERE datname = $1`, [dbName]

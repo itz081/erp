@@ -1,128 +1,97 @@
-
-
 <p-toast />
 
-<div class="auth-wrapper">
-    <p-card styleClass="auth-card" [style]="{'max-width': '500px'}">
+<div class="min-h-screen flex align-items-center justify-content-center p-3" style="background: radial-gradient(circle at top right, var(--p-primary-500), var(--p-primary-900));">
+    <div class="card p-0 shadow-8 border-round-2xl overflow-hidden bg-white flex flex-column" style="max-width: 600px; width: 100%;">
+        
+        <div class="p-5 md:p-7 flex flex-column">
+            <div class="text-center mb-5">
+                <i class="pi pi-user-plus text-primary text-5xl mb-3"></i>
+                <h2 class="text-900 text-3xl font-bold mb-2">Crear Cuenta</h2>
+                <p class="text-600">Únete a nuestra plataforma segura</p>
+            </div>
 
-        <ng-template pTemplate="header">
-            <div class="auth-header">
-                <div class="auth-icon-circle">
-                    <i class="pi pi-user-plus"></i>
+            <form [formGroup]="registerForm" (ngSubmit)="onRegister()" class="grid">
+                
+                <div class="col-12 md:col-6 flex flex-column gap-2 mb-3">
+                    <label for="reg-username" class="font-semibold text-900">Usuario</label>
+                    <span class="p-input-icon-left w-full">
+                        <i class="pi pi-id-card z-1"></i>
+                        <input id="reg-username" type="text" pInputText formControlName="username" class="w-full" placeholder="ej. usuario123" />
+                    </span>
                 </div>
-                <h2 class="auth-title">Crear Cuenta</h2>
-                <span class="auth-subtitle">Completa el formulario para registrarte</span>
-            </div>
-        </ng-template>
 
-        <form [formGroup]="registerForm" (ngSubmit)="onRegister()" class="auth-form">
+                <div class="col-12 md:col-6 flex flex-column gap-2 mb-3">
+                    <label for="reg-name" class="font-semibold text-900">Nombre Completo</label>
+                    <span class="p-input-icon-left w-full">
+                        <i class="pi pi-user z-1"></i>
+                        <input id="reg-name" type="text" pInputText formControlName="fullName" class="w-full" placeholder="Nombre Apellido" />
+                    </span>
+                </div>
 
-            <!-- Usuario -->
-            <p-floatlabel variant="on">
-                <input id="reg-username" type="text" pInputText formControlName="username" class="auth-input" appTrimOnBlur />
-                <label for="reg-username">
-                    <i class="pi pi-id-card" style="margin-right: 6px;"></i>Usuario
-                </label>
-            </p-floatlabel>
+                <div class="col-12 md:col-6 flex flex-column gap-2 mb-3">
+                    <label for="reg-email" class="font-semibold text-900">Correo Electrónico</label>
+                    <span class="p-input-icon-left w-full">
+                        <i class="pi pi-envelope z-1"></i>
+                        <input id="reg-email" type="email" pInputText formControlName="email" class="w-full" placeholder="correo@ejemplo.com" />
+                    </span>
+                </div>
 
-            <!-- Nombre Completo -->
-            <p-floatlabel variant="on">
-                <input id="reg-name" type="text" pInputText formControlName="fullName" class="auth-input" appTrimOnBlur/>
-                <label for="reg-name">
-                    <i class="pi pi-user" style="margin-right: 6px;"></i>Nombre completo
-                </label>
-            </p-floatlabel>
+                <div class="col-12 md:col-6 flex flex-column gap-2 mb-3">
+                    <label for="reg-phone" class="font-semibold text-900">Teléfono</label>
+                    <span class="p-input-icon-left w-full">
+                        <i class="pi pi-phone z-1"></i>
+                        <input id="reg-phone" type="text" pInputText formControlName="phone" class="w-full" placeholder="10 dígitos" maxlength="10" />
+                    </span>
+                </div>
 
-            <!-- Correo -->
-            <p-floatlabel variant="on">
-                <input id="reg-email" type="email" pInputText formControlName="email" class="auth-input" appTrimOnBlur/>
-                <label for="reg-email">
-                    <i class="pi pi-envelope" style="margin-right: 6px;"></i>Correo electrónico
-                </label>
-            </p-floatlabel>
+                <div class="col-12 flex flex-column gap-2 mb-3">
+                    <label for="reg-address" class="font-semibold text-900">Dirección</label>
+                    <span class="p-input-icon-left w-full">
+                        <i class="pi pi-map-marker z-1"></i>
+                        <input id="reg-address" type="text" pInputText formControlName="address" class="w-full" placeholder="Ciudad, País" />
+                    </span>
+                </div>
 
-            <!-- Teléfono -->
-            <p-floatlabel variant="on">
-                <input id="reg-phone" type="text" pInputText formControlName="phone" class="auth-input" maxlength="10"/>
-                <label for="reg-phone">
-                    <i class="pi pi-phone" style="margin-right: 6px;"></i>Teléfono (solo números)
-                </label>
-            </p-floatlabel>
+                <div class="col-12 flex flex-column gap-2 mb-3">
+                    <label for="reg-birthdate" class="font-semibold text-900">Fecha de Nacimiento</label>
+                    <p-datepicker id="reg-birthdate" formControlName="birthDate" [showIcon]="true" appendTo="body" styleClass="w-full" dateFormat="dd/mm/yy" placeholder="Selecciona tu fecha" />
+                </div>
 
-            <!-- Dirección -->
-            <p-floatlabel variant="on">
-                <input id="reg-address" type="text" pInputText formControlName="address" class="auth-input" appTrimOnBlur/>
-                <label for="reg-address">
-                    <i class="pi pi-map-marker" style="margin-right: 6px;"></i>Dirección
-                </label>
-            </p-floatlabel>
+                <div class="col-12">
+                    <p-divider align="center">
+                        <span class="text-400 font-bold text-xs">SEGURIDAD</span>
+                    </p-divider>
+                </div>
 
-            <!-- Fecha de Nacimiento -->
-            <p-floatlabel variant="on">
-                <p-datepicker id="reg-birthdate" formControlName="birthDate" [showIcon]="true" appendTo="body"
-                    styleClass="auth-input" inputStyleClass="auth-input" dateFormat="dd/mm/yy" />
-                <label for="reg-birthdate">
-                    <i class="pi pi-calendar" style="margin-right: 6px;"></i>Fecha de Nacimiento (18+)
-                </label>
-            </p-floatlabel>
+                <div class="col-12 md:col-6 flex flex-column gap-2 mb-3">
+                    <label for="reg-password" class="font-semibold text-900">Contraseña</label>
+                    <p-password id="reg-password" formControlName="password" [toggleMask]="true" styleClass="w-full" inputStyleClass="w-full" placeholder="Mín. 10 caracteres" />
+                </div>
 
-            <p-divider align="center">
-                <span class="divider-label">SEGURIDAD</span>
-            </p-divider>
+                <div class="col-12 md:col-6 flex flex-column gap-2 mb-3">
+                    <label for="reg-confirm" class="font-semibold text-900">Confirmar</label>
+                    <p-password id="reg-confirm" formControlName="confirmPassword" [feedback]="false" [toggleMask]="true" styleClass="w-full" inputStyleClass="w-full" placeholder="Repite contraseña" />
+                </div>
 
-            <!-- Contraseña -->
-            <p-floatlabel variant="on">
-                <p-password id="reg-password" formControlName="password" [toggleMask]="true" styleClass="auth-input"
-                    inputStyleClass="auth-input" promptLabel="Mínimo 10 caracteres y un símbolo" weakLabel="Débil"
-                    mediumLabel="Media" strongLabel="Fuerte" />
-                <label for="reg-password">
-                    <i class="pi pi-key" style="margin-right: 6px;"></i>Contraseña
-                </label>
-            </p-floatlabel>
+                <!-- Errores -->
+                <div class="col-12 mb-2" *ngIf="registerForm.dirty || registerForm.touched">
+                    <div class="p-3 bg-red-50 border-round-lg flex flex-column gap-1" *ngIf="registerForm.invalid">
+                         <small class="text-red-500 font-medium" *ngIf="registerForm.get('password')?.errors?.['minlength']">• Mínimo 10 caracteres</small>
+                         <small class="text-red-500 font-medium" *ngIf="registerForm.get('password')?.errors?.['noSymbol']">• Debe incluir un símbolo (!@#$...)</small>
+                         <small class="text-red-500 font-medium" *ngIf="registerForm.get('birthDate')?.errors?.['underAge']">• Debes ser mayor de edad</small>
+                         <small class="text-red-500 font-medium" *ngIf="registerForm.get('confirmPassword')?.hasError('mismatch')">• Las contraseñas no coinciden</small>
+                    </div>
+                </div>
 
-            <!-- Confirmar Contraseña -->
-            <p-floatlabel variant="on">
-                <p-password id="reg-confirm" formControlName="confirmPassword" [feedback]="false" [toggleMask]="true"
-                    styleClass="auth-input" inputStyleClass="auth-input" />
-                <label for="reg-confirm">
-                    <i class="pi pi-lock" style="margin-right: 6px;"></i>Confirmar contraseña
-                </label>
-            </p-floatlabel>
+                <div class="col-12">
+                    <p-button label="Registrarme" type="submit" [loading]="loading()" [disabled]="registerForm.invalid" icon="pi pi-check" styleClass="w-full py-3" />
+                </div>
+            </form>
 
-            <!-- Mensajes de Validación -->
-            <div class="validation-errors" *ngIf="registerForm.dirty || registerForm.touched">
-                <small class="error-text" *ngIf="registerForm.get('password')?.errors?.['minlength']">
-                    * La contraseña debe tener al menos 10 caracteres.
-                </small>
-                <small class="error-text" *ngIf="registerForm.get('password')?.errors?.['noSymbol']">
-                    * La contraseña debe incluir al menos un símbolo especial (!@#$%^&* etc.).
-                </small>
-                <small class="error-text" *ngIf="registerForm.get('birthDate')?.errors?.['underAge']">
-                    * Debes ser mayor de edad para registrarte (18+).
-                </small>
-                <small class="error-text" *ngIf="registerForm.get('phone')?.errors?.['pattern']">
-                    * El teléfono solo debe contener números.
-                </small>
-                <small class="error-text" *ngIf="registerForm.get('confirmPassword')?.hasError('mismatch')">
-                    * Las contraseñas no coinciden.
-                </small>
-                <small class="error-text" *ngIf="registerForm.invalid && registerForm.touched">
-                    * Por favor completa todos los campos correctamente.
-                </small>
-            </div>
-
-            <p-button type="submit" label="Crear cuenta" icon="pi pi-check" iconPos="right" styleClass="auth-btn"
-                [loading]="loading()" [disabled]="registerForm.invalid" />
-
-        </form>
-
-        <ng-template pTemplate="footer">
-            <p-divider />
-            <p class="auth-footer-text">
-                ¿Ya tienes cuenta?
-                <a routerLink="/" class="auth-link">Inicia sesión</a>
+            <p class="text-600 text-center mt-4 mb-0">
+                ¿Ya tienes una cuenta? 
+                <a routerLink="/" class="text-primary font-bold no-underline hover:underline">Inicia sesión aquí</a>
             </p>
-        </ng-template>
-
-    </p-card>
+        </div>
+    </div>
 </div>

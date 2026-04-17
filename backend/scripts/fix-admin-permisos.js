@@ -1,8 +1,4 @@
-/**
- * Script para corregir los permisos del usuario admin en la BD.
- * Agrega groups:add, groups:edit, groups:delete, groups:member-add, groups:member-delete
- * que faltaban en la lista original del admin.
- */
+
 import pool from '../users/src/db.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -38,7 +34,6 @@ async function fixAdminPermisos() {
     console.log(`✅ Permisos encontrados: ${permRows.map(p => p.nombre).join(', ')}`);
     const permIds = permRows.map(p => p.id);
 
-    // Buscar usuarios admin (los que tienen users:manage)
     const usersManageId = permRows.find(p => p.nombre === 'users:manage')?.id;
     if (!usersManageId) {
       console.error('❌ No se encontró el permiso users:manage en la BD. ¿Está inicializada la BD?');

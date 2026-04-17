@@ -10,117 +10,35 @@ body {
     margin: 0;
     padding: 0;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f9fafb;
-    color: #111827;
+    background-color: var(--p-content-background);
+    color: var(--p-text-color);
     height: 100%;
 }
 
-/* --- ESTILOS PARA AUTENTICACIÓN --- */
-
-.auth-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-    padding: 1rem;
+/* Custom scrollbar for a more premium look */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
 
-.auth-card {
-    width: 100%;
-    max-width: 420px;
-    border-radius: 1.25rem !important;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-    background: #ffffff !important;
-    border: none !important;
-    overflow: hidden;
+::-webkit-scrollbar-track {
+    background: transparent;
 }
 
-.auth-card .p-card-body {
-    padding: 0 !important;
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
 }
 
-.auth-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 2rem 1.5rem 1rem 1.5rem;
+::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
 }
 
-.auth-icon-circle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 56px;
-    height: 56px;
-    background-color: var(--p-primary-color);
-    border-radius: 50%;
-    color: white;
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
+/* Background utilities */
+.bg-faded {
+    background-color: rgba(var(--p-primary-500-rgb), 0.03);
 }
 
-.auth-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 0;
-    color: #1f2937;
-}
-
-.auth-subtitle {
-    font-size: 0.875rem;
-    color: #6b7280;
-    text-align: center;
-}
-
-.auth-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    padding: 1rem 1.75rem 1.75rem 1.75rem;
-}
-
-.auth-input {
-    width: 100% !important;
-}
-
-.auth-btn {
-    width: 100% !important;
-    font-weight: 600 !important;
-    padding: 0.75rem !important;
-    border-radius: 0.75rem !important;
-}
-
-.auth-footer-text {
-    text-align: center;
-    font-size: 0.875rem;
-    color: #6b7280;
-    padding-bottom: 1.5rem;
-    margin: 0;
-}
-
-.auth-link {
-    color: var(--p-primary-color);
-    font-weight: 600;
-    text-decoration: none;
-    margin-left: 0.25rem;
-}
-
-.auth-link:hover {
-    text-decoration: underline;
-}
-
-.divider-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #9ca3af;
-    text-transform: uppercase;
-}
-
-.error-text {
-    color: #ef4444;
-    font-size: 0.75rem;
-    display: block;
-    margin-top: 0.25rem;
+.bg-primary-faded {
+    background-color: rgba(var(--p-primary-500-rgb), 0.1);
 }
