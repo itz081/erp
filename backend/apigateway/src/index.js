@@ -15,9 +15,9 @@ dotenv.config({ path: join(__dirname, '../../.env') });
 const app = Fastify({ logger: false });
 
 const SERVICES = {
-  users: `http://localhost:${process.env.PORT_USERS || 3001}`,
-  tickets: `http://localhost:${process.env.PORT_TICKETS || 3002}`,
-  groups: `http://localhost:${process.env.PORT_GROUPS || 3003}`,
+  users: `http://127.0.0.1:${process.env.PORT_USERS || 3001}`,
+  tickets: `http://127.0.0.1:${process.env.PORT_TICKETS || 3002}`,
+  groups: `http://127.0.0.1:${process.env.PORT_GROUPS || 3003}`,
 };
 
 const JWT_SECRET = process.env.JWT_SECRET || 'seguridad_jwt_secret_super_seguro';

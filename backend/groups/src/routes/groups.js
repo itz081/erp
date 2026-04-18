@@ -172,13 +172,36 @@ export default async function groupsRoutes(fastify) {
       return replyError(403, 'SxGP403', 'Sin permiso para eliminar grupos');
     }
 
-    const { rowCount } = await pool.query('DELETE FROM grupos WHERE id = $1', [id]);
-    if (rowCount === 0) {
-      res.code(404);
-      return replyError(404, 'SxGP404', 'Grupo no encontrado');
-    }
+    try {
+      const client = await pool.connect();
+      let rowCount = 0;
+      try {
+        await client.query('BEGIN');
+        await client.query('DELETE FROM tickets WHERE grupo_id = $1', [id]);
+        const result = await client.query('DELETE FROM grupos WHERE id = $1', [id]);
+        rowCount = result.rowCount;
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      } finally {
+        client.release();
+      }
 
-    return reply(200, 'SxGP200', { message: 'Grupo eliminado' });
+      if (rowCount === 0) {
+        res.code(404);
+        return replyError(404, 'SxGP404', 'Grupo no encontrado');
+      }
+
+      return reply(200, 'SxGP200', { message: 'Grupo eliminado correctamente' });
+    } catch (error) {
+      if (error.code === '23503') {
+        res.code(409);
+        return replyError(409, 'SxGP409', 'No se puede eliminar el grupo porque tiene registros asociados');
+      }
+      res.code(500);
+      return replyError(500, 'SxGP500', 'Error interno al intentar eliminar el grupo');
+    }
   });
 
   fastify.get('/:id/stats', { preHandler: verifyToken }, async (request, res) => {
